@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tekken Movement Trainer V3</title>
+
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #1a1d24;
+      --panel2: #222631;
+      --text: #f1f1f1;
+      --muted: #aaa;
+      --green: #8cff8c;
+      --red: #ff7777;
+      --yellow: #ffd166;
+      --blue: #82cfff;
+      --purple: #c792ea;
+      --border: #343946;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+    }
+
+    h1 {
+      color: var(--green);
+      margin-top: 0;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: var(--blue);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 16px;
+    }
+
+    .box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .box.alt {
+      background: var(--panel2);
+    }
+
+    .big {
+      font-size: 44px;
+      font-weight: bold;
+      line-height: 1.2;
+    }
+
+    .medium {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .good {
+      color: var(--green);
+    }
+
+    .bad {
+      color: var(--red);
+    }
+
+    .warn {
+      color: var(--yellow);
+    }
+
+    .blue {
+      color: var(--blue);
+    }
+
+    .purple {
+      color: var(--purple);
+    }
+
+    button, select, input {
+      background: #2c3240;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 15px;
+      margin: 4px;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #394052;
+    }
+
+    button.active {
+      outline: 2px solid var(--green);
+      color: var(--green);
+    }
+
+    button.danger {
+      background: #452222;
+    }
+
+    button.danger:hover {
+      background: #5a2b2b;
+    }
+
+    .log {
+      font-size: 18px;
+      line-height: 1.7;
+      word-wrap: break-word;
+      min-height: 52px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      margin: 2px;
+      background: #303642;
+      border: 1px solid var(--border);
+      font-weight: bold;
+    }
+
+    .expected {
+      outline: 2px solid var(--yellow);
+    }
+
+    label {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .meter {
+      width: 100%;
+      height: 16px;
+      background: #111;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--green);
+      transition: width 0.1s linear;
+    }
+
+    .flash {
+      animation: flash 0.15s;
+    }
+
+    @keyframes flash {
+      from { background: #3a4b2f; }
+      to { background: var(--panel); }
+    }
+
+    .metronome-beat {
+      font-size: 54px;
+      font-weight: bold;
+      color: var(--yellow);
+      text-align: center;
+      min-height: 70px;
+    }
+
+    .kbd-key {
+      display: inline-block;
+      min-width: 90px;
+      text-align: center;
+      padding: 8px;
+      margin: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #111;
+      font-weight: bold;
+    }
+
+    .score-card {
+      background: #10131a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .device-card {
+      background: #111;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    .footer {
+      color: var(--muted);
+      margin-top: 24px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Tekken Movement Trainer V3</h1>
+
+  <div class="box">
+    <div class="medium">Mode</div>
+    <div class="row">
+      <button id="kbdModeBtn" class="active" onclick="setMode('kbd')">KBD Trainer</button>
+      <button id="waveModeBtn" onclick="setMode('wave')">Wave Dash Trainer</button>
+
+      <select id="sideSelect" onchange="setSide(this.value)">
+        <option value="p1">P1 Side</option>
+        <option value="p2">P2 Side</option>
+      </select>
+    </div>
+
+    <p class="small">
+      KBD target: <strong>b → db → b → n</strong>.
+      Wave dash target: <strong>f → n → d → df → n</strong>.
+    </p>
+
+    <p class="small">
+      Wave dash mode accepts several versions, including
+      <strong>f → n → d → df → n</strong>,
+      <strong>f → n → d → df → f → n</strong>,
+      <strong>f → df → f → n</strong>, and
+      <strong>f → d → df → n</strong>.
+    </p>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <h2>Live Input</h2>
+      <div id="currentInput" class="big">n</div>
+      <p class="small">This shows what the trainer currently reads after P1/P2 side conversion.</p>
+
+      <div class="row">
+        <span class="kbd-key">Back: <span id="backState">OFF</span></span>
+        <span class="kbd-key">Down: <span id="downState">OFF</span></span>
+        <span class="kbd-key">Forward: <span id="forwardState">OFF</span></span>
+        <span class="kbd-key">Up: <span id="upState">OFF</span></span>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>Target Sequence</h2>
+      <div id="targetDisplay" class="log"></div>
+      <p class="small">Yellow outline = the next input the trainer expects.</p>
+    </div>
+
+    <div class="box">
+      <h2>Stats</h2>
+      <div>Clean cycles</div>
+      <div id="cycles" class="big good">0</div>
+
+      <div>Misses</div>
+      <div id="misses" class="big bad">0</div>
+
+      <div>Slow inputs</div>
+      <div id="slowInputs" class="big warn">0</div>
+    </div>
+
+    <div class="box">
+      <h2>Speed / Accuracy</h2>
+      <div id="speed" class="medium">0.00 cycles/sec</div>
+      <div id="accuracy" class="medium">100% accuracy</div>
+      <div id="bestScore" class="small">Best: none yet</div>
+    </div>
+  </div>
+
+  <div class="box alt">
+    <h2>Input History</h2>
+    <div id="inputLog" class="log"></div>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <h2>10 Second Test</h2>
+      <p class="small">This resets your score and counts clean cycles for 10 seconds.</p>
+
+      <button onclick="startTimedTest()">Start 10s Test</button>
+      <button onclick="resetTrainer()">Reset</button>
+
+      <div class="score-card">
+        <div class="small">Previous best for this mode/side</div>
+        <div id="previousBestForTest" class="medium purple">No previous best yet</div>
+      </div>
+
+      <div class="score-card">
+        <div class="small">Current run vs previous best</div>
+        <div id="currentRunComparison" class="medium">Start a test</div>
+      </div>
+
+      <div class="meter" style="margin-top: 14px;">
+        <div id="testMeter" class="meter-fill"></div>
+      </div>
+
+      <p id="testStatus" class="small">Not running</p>
+    </div>
+
+    <div class="box">
+      <h2>Timing Window</h2>
+      <p class="small">
+        If the gap between inputs is above this, it counts as a slow input.
+      </p>
+
+      <label for="timingWindow">Max gap between inputs: <span id="timingValue">170</span> ms</label>
+      <input
+        id="timingWindow"
+        type="range"
+        min="70"
+        max="300"
+        value="170"
+        oninput="setTimingWindow(this.value)"
+      />
+
+      <p class="small">
+        Start around 170–220ms. Tighten it once your chain is clean.
+      </p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <h2>Metronome</h2>
+      <p class="small">
+        Use this to drill rhythm. It flashes the next target input at the BPM you choose.
+      </p>
+
+      <div id="metronomeBeat" class="metronome-beat">—</div>
+
+      <label for="bpm">BPM: <span id="bpmValue">120</span></label>
+      <input
+        id="bpm"
+        type="range"
+        min="60"
+        max="240"
+        value="120"
+        oninput="setBpm(this.value)"
+      />
+
+      <div class="row">
+        <button id="metronomeBtn" onclick="toggleMetronome()">Start Metronome</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>Keyboard / Leverless Binds</h2>
+      <p class="small">
+        Click a bind button, then press the keyboard key/button your leverless sends.
+      </p>
+
+      <div class="row">
+        <button onclick="beginKeyboardRebind('left')">Bind Left</button>
+        <span id="leftBind" class="kbd-key">KeyA</span>
+      </div>
+
+      <div class="row">
+        <button onclick="beginKeyboardRebind('down')">Bind Down</button>
+        <span id="downBind" class="kbd-key">KeyS</span>
+      </div>
+
+      <div class="row">
+        <button onclick="beginKeyboardRebind('right')">Bind Right</button>
+        <span id="rightBind" class="kbd-key">KeyD</span>
+      </div>
+
+      <div class="row">
+        <button onclick="beginKeyboardRebind('up')">Bind Up</button>
+        <span id="upBind" class="kbd-key">KeyW</span>
+      </div>
+
+      <div class="row">
+        <button class="danger" onclick="resetKeyboardBinds()">Reset Keyboard Binds</button>
+        <button class="danger" onclick="clearBestScore()">Clear Best For Current Mode</button>
+      </div>
+
+      <p id="keyboardRebindStatus" class="small">No keyboard rebind selected.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <h2>Controller / Fightstick Support</h2>
+      <p class="small">
+        Plug in a controller, fightstick, or leverless in controller mode, then press any button.
+        Browser support depends on the device and mode.
+      </p>
+
+      <div class="device-card">
+        <div class="small">Connected device</div>
+        <div id="gamepadStatus" class="medium warn">No gamepad detected</div>
+        <div id="gamepadDetails" class="small">Press a button on your device after plugging it in.</div>
+      </div>
+
+      <div class="row">
+        <button onclick="refreshGamepads()">Refresh Gamepads</button>
+      </div>
+
+      <p class="small">
+        Common mappings are auto-filled, but you can rebind them below.
+        D-pad buttons, face buttons, stick directions, and arcade levers can all be captured if the browser exposes them.
+      </p>
+    </div>
+
+    <div class="box">
+      <h2>Controller / Fightstick Binds</h2>
+
+      <div class="row">
+        <button onclick="beginGamepadRebind('left')">Bind GP Left</button>
+        <span id="gpLeftBind" class="kbd-key">Button 14 / Axis 0-</span>
+      </div>
+
+      <div class="row">
+        <button onclick="beginGamepadRebind('down')">Bind GP Down</button>
+        <span id="gpDownBind" class="kbd-key">Button 13 / Axis 1+</span>
+      </div>
+
+      <div class="row">
+        <button onclick="beginGamepadRebind('right')">Bind GP Right</button>
+        <span id="gpRightBind" class="kbd-key">Button 15 / Axis 0+</span>
+      </div>
+
+      <div class="row">
+        <button onclick="beginGamepadRebind('up')">Bind GP Up</button>
+        <span id="gpUpBind" class="kbd-key">Button 12 / Axis 1-</span>
+      </div>
+
+      <div class="row">
+        <button class="danger" onclick="resetGamepadBinds()">Reset Controller Binds</button>
+      </div>
+
+      <p id="gamepadRebindStatus" class="small">No controller rebind selected.</p>
+
+      <p class="small">
+        Tip: If your fightstick lever does not bind as buttons, it may bind as axes.
+        Push the lever fully in the direction when rebinding.
+      </p>
+    </div>
+  </div>
+
+  <div class="box">
+    <h2>Notes</h2>
+    <p class="small">
+      This is not a perfect Tekken input engine. It is a muscle-memory trainer.
+      It measures your physical input rhythm and consistency.
+    </p>
+
+    <p class="small">
+      Keyboard/leverless input is read through keyboard events. Controller/fightstick input is read through the browser Gamepad API.
+      Some devices will only appear if they are in XInput / controller mode.
+    </p>
+
+    <p class="small">
+      For KBD with SOCD, this trainer interprets left + right as horizontal neutral.
+      For wave dash, the main expected pattern is now your version:
+      <strong>tap f → neutral → d → roll to df → neutral</strong>.
+    </p>
+  </div>
+
+  <script>
+    // ==========================
+    // DEFAULTS
+    // ==========================
+
+    const defaultKeyboardBinds = {
+      left: "KeyA",
+      down: "KeyS",
+      right: "KeyD",
+      up: "KeyW"
+    };
+
+    const defaultGamepadBinds = {
+      left: [
+        { type: "button", index: 14 },
+        { type: "axis", index: 0, direction: -1 }
+      ],
+      down: [
+        { type: "button", index: 13 },
+        { type: "axis", index: 1, direction: 1 }
+      ],
+      right: [
+        { type: "button", index: 15 },
+        { type: "axis", index: 0, direction: 1 }
+      ],
+      up: [
+        { type: "button", index: 12 },
+        { type: "axis", index: 1, direction: -1 }
+      ]
+    };
+
+    const axisThreshold = 0.55;
+    const buttonThreshold = 0.5;
+
+    // ==========================
+    // STATE
+    // ==========================
+
+    let keyboardBinds = loadKeyboardBinds();
+    let gamepadBinds = loadGamepadBinds();
+
+    const keyboardPressed = {
+      left: false,
+      down: false,
+      right: false,
+      up: false
+    };
+
+    const gamepadPressed = {
+      left: false,
+      down: false,
+      right: false,
+      up: false
+    };
+
+    const pressed = {
+      left: false,
+      down: false,
+      right: false,
+      up: false
+    };
+
+    let selectedGamepadIndex = null;
+    let lastGamepadSnapshot = null;
+
+    let mode = "kbd";
+    let side = "p1";
+
+    let lastDirection = "n";
+    let previousInputTime = null;
+
+    let inputHistory = [];
+
+    let targetIndex = 0;
+    let cleanCycles = 0;
+    let misses = 0;
+    let slowInputs = 0;
+    let totalAttempts = 0;
+
+    let startTime = performance.now();
+
+    let timingWindow = 170;
+
+    let isTestRunning = false;
+    let testStartTime = null;
+    let testDurationMs = 10000;
+    let testInterval = null;
+
+    let testStartingBest = null;
+
+    let keyboardRebindAction = null;
+    let gamepadRebindAction = null;
+    let gamepadRebindStartSnapshot = null;
+
+    let metronomeRunning = false;
+    let metronomeTimer = null;
+    let metronomeIndex = 0;
+    let bpm = 120;
+
+    const targets = {
+      kbd: ["b", "db", "b", "n"],
+      wave: ["f", "n", "d", "df", "n"]
+    };
+
+    const alternateTargets = {
+      kbd: [
+        ["b", "db", "b", "n"]
+      ],
+      wave: [
+        ["f", "n", "d", "df", "n"],
+        ["f", "n", "d", "df", "f", "n"],
+        ["f", "df", "f", "n"],
+        ["f", "df", "n"],
+        ["f", "d", "df", "n"],
+        ["f", "d", "df", "f", "n"]
+      ]
+    };
+
+    // ==========================
+    // ELEMENTS
+    // ==========================
+
+    const currentInputEl = document.getElementById("currentInput");
+    const inputLogEl = document.getElementById("inputLog");
+    const cyclesEl = document.getElementById("cycles");
+    const missesEl = document.getElementById("misses");
+    const slowInputsEl = document.getElementById("slowInputs");
+    const speedEl = document.getElementById("speed");
+    const accuracyEl = document.getElementById("accuracy");
+    const bestScoreEl = document.getElementById("bestScore");
+    const targetDisplayEl = document.getElementById("targetDisplay");
+    const testMeterEl = document.getElementById("testMeter");
+    const testStatusEl = document.getElementById("testStatus");
+    const previousBestForTestEl = document.getElementById("previousBestForTest");
+    const currentRunComparisonEl = document.getElementById("currentRunComparison");
+    const metronomeBeatEl = document.getElementById("metronomeBeat");
+    const metronomeBtn = document.getElementById("metronomeBtn");
+
+    const backStateEl = document.getElementById("backState");
+    const downStateEl = document.getElementById("downState");
+    const forwardStateEl = document.getElementById("forwardState");
+    const upStateEl = document.getElementById("upState");
+
+    const gamepadStatusEl = document.getElementById("gamepadStatus");
+    const gamepadDetailsEl = document.getElementById("gamepadDetails");
+
+    // ==========================
+    // MODE / SIDE
+    // ==========================
+
+    function setMode(newMode) {
+      mode = newMode;
+
+      document.getElementById("kbdModeBtn").classList.toggle("active", mode === "kbd");
+      document.getElementById("waveModeBtn").classList.toggle("active", mode === "wave");
+
+      resetTrainer();
+      updateTargetDisplay();
+      updateBestScore();
+      updatePreviousBestForTest();
+    }
+
+    function setSide(newSide) {
+      side = newSide;
+      resetTrainer();
+      updateTargetDisplay();
+      updateBestScore();
+      updatePreviousBestForTest();
+    }
+
+    function getCurrentTarget() {
+      return targets[mode];
+    }
+
+    // ==========================
+    // INPUT COMBINATION
+    // ==========================
+
+    function combineInputs() {
+      pressed.left = keyboardPressed.left || gamepadPressed.left;
+      pressed.down = keyboardPressed.down || gamepadPressed.down;
+      pressed.right = keyboardPressed.right || gamepadPressed.right;
+      pressed.up = keyboardPressed.up || gamepadPressed.up;
+    }
+
+    function getPhysicalState() {
+      const leftHeld = pressed.left;
+      const rightHeld = pressed.right;
+      const downHeld = pressed.down;
+      const upHeld = pressed.up;
+
+      let backHeld;
+      let forwardHeld;
+
+      if (side === "p1") {
+        backHeld = leftHeld;
+        forwardHeld = rightHeld;
+      } else {
+        backHeld = rightHeld;
+        forwardHeld = leftHeld;
+      }
+
+      return {
+        backHeld,
+        forwardHeld,
+        downHeld,
+        upHeld
+      };
+    }
+
+    function getDirection() {
+      const { backHeld, forwardHeld, downHeld, upHeld } = getPhysicalState();
+
+      // SOCD interpretation:
+      // back + forward = neutral horizontally.
+      // back + forward + down = down.
+      if (backHeld && forwardHeld && downHeld) return "d";
+      if (backHeld && forwardHeld) return "n";
+
+      if (backHeld && downHeld) return "db";
+      if (forwardHeld && downHeld) return "df";
+
+      if (backHeld) return "b";
+      if (forwardHeld) return "f";
+      if (downHeld) return "d";
+      if (upHeld) return "u";
+
+      return "n";
+    }
+
+    function updateDirectionFromInputs() {
+      combineInputs();
+      registerDirection(getDirection());
+      updateDisplay();
+    }
+
+    function registerDirection(direction) {
+      if (direction === lastDirection) return;
+
+      const now = performance.now();
+      const gap = previousInputTime === null ? 0 : now - previousInputTime;
+
+      lastDirection = direction;
+      previousInputTime = now;
+
+      inputHistory.push({
+        direction,
+        time: now,
+        gap
+      });
+
+      if (inputHistory.length > 45) {
+        inputHistory.shift();
+      }
+
+      checkTarget(direction, gap);
+    }
+
+    // ==========================
+    // TARGET CHECKING
+    // ==========================
+
+    function checkTarget(direction, gap) {
+      const target = getCurrentTarget();
+      const expected = target[targetIndex];
+
+      if (targetIndex === 0 && direction === "n") {
+        return;
+      }
+
+      totalAttempts++;
+
+      if (gap > timingWindow && previousInputTime !== null) {
+        slowInputs++;
+      }
+
+      if (mode === "kbd") {
+        checkStrictTarget(direction, target, expected);
+        return;
+      }
+
+      if (mode === "wave") {
+        checkWaveTarget(direction);
+        return;
+      }
+    }
+
+    function checkStrictTarget(direction, target, expected) {
+      if (direction === expected) {
+        targetIndex++;
+
+        if (targetIndex >= target.length) {
+          cleanCycles++;
+          targetIndex = 0;
+          flashElement(cyclesEl);
+        }
+
+        return;
+      }
+
+      misses++;
+
+      if (direction === target[0]) {
+        targetIndex = 1;
+      } else {
+        targetIndex = 0;
+      }
+
+      flashElement(missesEl);
+    }
+
+    function checkWaveTarget(direction) {
+      const possiblePatterns = alternateTargets.wave;
+      const recent = inputHistory.map(item => item.direction);
+
+      for (const pattern of possiblePatterns) {
+        if (endsWithPattern(recent, pattern)) {
+          cleanCycles++;
+          targetIndex = 0;
+          flashElement(cyclesEl);
+          return;
+        }
+      }
+
+      const target = getCurrentTarget();
+      const expected = target[targetIndex];
+
+      if (direction === expected) {
+        targetIndex++;
+
+        if (targetIndex >= target.length) {
+          targetIndex = 0;
+        }
+
+        return;
+      }
+
+      const allowedWaveInputs = ["f", "n", "d", "df"];
+
+      if (!allowedWaveInputs.includes(direction)) {
+        misses++;
+        targetIndex = 0;
+        flashElement(missesEl);
+        return;
+      }
+
+      if (direction === "f") {
+        targetIndex = 1;
+      }
+    }
+
+    function endsWithPattern(history, pattern) {
+      if (history.length < pattern.length) return false;
+
+      const recent = history.slice(-pattern.length);
+
+      for (let i = 0; i < pattern.length; i++) {
+        if (recent[i] !== pattern[i]) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    // ==========================
+    // KEYBOARD EVENTS
+    // ==========================
+
+    window.addEventListener("keydown", event => {
+      if (keyboardRebindAction) {
+        event.preventDefault();
+        setKeyboardBind(keyboardRebindAction, event.code);
+        return;
+      }
+
+      const action = getKeyboardActionFromCode(event.code);
+
+      if (!action) return;
+
+      event.preventDefault();
+
+      if (keyboardPressed[action]) return;
+
+      keyboardPressed[action] = true;
+      updateDirectionFromInputs();
+    });
+
+    window.addEventListener("keyup", event => {
+      const action = getKeyboardActionFromCode(event.code);
+
+      if (!action) return;
+
+      event.preventDefault();
+
+      keyboardPressed[action] = false;
+      updateDirectionFromInputs();
+    });
+
+    window.addEventListener("blur", () => {
+      for (const key in keyboardPressed) keyboardPressed[key] = false;
+      for (const key in gamepadPressed) gamepadPressed[key] = false;
+      updateDirectionFromInputs();
+    });
+
+    // ==========================
+    // GAMEPAD SUPPORT
+    // ==========================
+
+    window.addEventListener("gamepadconnected", event => {
+      selectedGamepadIndex = event.gamepad.index;
+      updateGamepadStatus();
+    });
+
+    window.addEventListener("gamepaddisconnected", event => {
+      if (selectedGamepadIndex === event.gamepad.index) {
+        selectedGamepadIndex = null;
+      }
+
+      for (const key in gamepadPressed) {
+        gamepadPressed[key] = false;
+      }
+
+      updateGamepadStatus();
+      updateDirectionFromInputs();
+    });
+
+    function refreshGamepads() {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+
+      selectedGamepadIndex = null;
+
+      for (let i = 0; i < gamepads.length; i++) {
+        if (gamepads[i]) {
+          selectedGamepadIndex = gamepads[i].index;
+          break;
+        }
+      }
+
+      updateGamepadStatus();
+    }
+
+    function getSelectedGamepad() {
+      if (!navigator.getGamepads) return null;
+
+      const gamepads = navigator.getGamepads();
+
+      if (selectedGamepadIndex !== null && gamepads[selectedGamepadIndex]) {
+        return gamepads[selectedGamepadIndex];
+      }
+
+      for (let i = 0; i < gamepads.length; i++) {
+        if (gamepads[i]) {
+          selectedGamepadIndex = gamepads[i].index;
+          return gamepads[i];
+        }
+      }
+
+      return null;
+    }
+
+    function pollGamepad() {
+      const gp = getSelectedGamepad();
+
+      if (!gp) {
+        requestAnimationFrame(pollGamepad);
+        return;
+      }
+
+      updateGamepadStatusFromPad(gp);
+
+      if (gamepadRebindAction) {
+        checkGamepadRebind(gp);
+      }
+
+      const previous = { ...gamepadPressed };
+
+      gamepadPressed.left = isGamepadDirectionPressed(gp, "left");
+      gamepadPressed.down = isGamepadDirectionPressed(gp, "down");
+      gamepadPressed.right = isGamepadDirectionPressed(gp, "right");
+      gamepadPressed.up = isGamepadDirectionPressed(gp, "up");
+
+      const changed =
+        previous.left !== gamepadPressed.left ||
+        previous.down !== gamepadPressed.down ||
+        previous.right !== gamepadPressed.right ||
+        previous.up !== gamepadPressed.up;
+
+      if (changed) {
+        updateDirectionFromInputs();
+      }
+
+      requestAnimationFrame(pollGamepad);
+    }
+
+    function isGamepadDirectionPressed(gp, action) {
+      const binds = gamepadBinds[action] || [];
+
+      return binds.some(bind => isGamepadBindActive(gp, bind));
+    }
+
+    function isGamepadBindActive(gp, bind) {
+      if (bind.type === "button") {
+        const button = gp.buttons[bind.index];
+        if (!button) return false;
+        return button.pressed || button.value > buttonThreshold;
+      }
+
+      if (bind.type === "axis") {
+        const value = gp.axes[bind.index] || 0;
+
+        if (bind.direction < 0) {
+          return value < -axisThreshold;
+        }
+
+        if (bind.direction > 0) {
+          return value > axisThreshold;
+        }
+      }
+
+      return false;
+    }
+
+    function updateGamepadStatus() {
+      const gp = getSelectedGamepad();
+
+      if (!gp) {
+        gamepadStatusEl.textContent = "No gamepad detected";
+        gamepadStatusEl.className = "medium warn";
+        gamepadDetailsEl.textContent = "Press a button on your device after plugging it in.";
+        return;
+      }
+
+      updateGamepadStatusFromPad(gp);
+    }
+
+    function updateGamepadStatusFromPad(gp) {
+      gamepadStatusEl.textContent = "Gamepad detected";
+      gamepadStatusEl.className = "medium good";
+      gamepadDetailsEl.textContent =
+        `${gp.id} | buttons: ${gp.buttons.length} | axes: ${gp.axes.length}`;
+    }
+
+    // ==========================
+    // GAMEPAD REBINDING
+    // ==========================
+
+    function beginGamepadRebind(action) {
+      const gp = getSelectedGamepad();
+
+      if (!gp) {
+        document.getElementById("gamepadRebindStatus").textContent =
+          "No gamepad detected. Plug one in and press a button first.";
+        return;
+      }
+
+      gamepadRebindAction = action;
+      gamepadRebindStartSnapshot = snapshotGamepad(gp);
+
+      document.getElementById("gamepadRebindStatus").textContent =
+        `Move/press the controller input for ${action.toUpperCase()}...`;
+    }
+
+    function snapshotGamepad(gp) {
+      return {
+        buttons: gp.buttons.map(button => button.value),
+        axes: gp.axes.slice()
+      };
+    }
+
+    function checkGamepadRebind(gp) {
+      if (!gamepadRebindAction || !gamepadRebindStartSnapshot) return;
+
+      for (let i = 0; i < gp.buttons.length; i++) {
+        const oldValue = gamepadRebindStartSnapshot.buttons[i] || 0;
+        const newValue = gp.buttons[i].value;
+
+        if (newValue > 0.8 && oldValue < 0.3) {
+          setGamepadBind(gamepadRebindAction, [{ type: "button", index: i }]);
+          return;
+        }
+      }
+
+      for (let i = 0; i < gp.axes.length; i++) {
+        const oldValue = gamepadRebindStartSnapshot.axes[i] || 0;
+        const newValue = gp.axes[i] || 0;
+
+        if (Math.abs(newValue) > 0.75 && Math.abs(oldValue) < 0.35) {
+          const direction = newValue < 0 ? -1 : 1;
+          setGamepadBind(gamepadRebindAction, [{ type: "axis", index: i, direction }]);
+          return;
+        }
+      }
+    }
+
+    function setGamepadBind(action, binds) {
+      gamepadBinds[action] = binds;
+      saveGamepadBinds();
+      updateGamepadBindDisplay();
+
+      document.getElementById("gamepadRebindStatus").textContent =
+        `${action.toUpperCase()} bound to ${formatGamepadBindList(binds)}.`;
+
+      gamepadRebindAction = null;
+      gamepadRebindStartSnapshot = null;
+    }
+
+    function resetGamepadBinds() {
+      gamepadBinds = JSON.parse(JSON.stringify(defaultGamepadBinds));
+      saveGamepadBinds();
+      updateGamepadBindDisplay();
+
+      document.getElementById("gamepadRebindStatus").textContent =
+        "Controller binds reset.";
+    }
+
+    function saveGamepadBinds() {
+      localStorage.setItem("tekkenTrainerGamepadBinds", JSON.stringify(gamepadBinds));
+    }
+
+    function loadGamepadBinds() {
+      const saved = localStorage.getItem("tekkenTrainerGamepadBinds");
+
+      if (!saved) {
+        return JSON.parse(JSON.stringify(defaultGamepadBinds));
+      }
+
+      try {
+        return {
+          ...JSON.parse(JSON.stringify(defaultGamepadBinds)),
+          ...JSON.parse(saved)
+        };
+      } catch {
+        return JSON.parse(JSON.stringify(defaultGamepadBinds));
+      }
+    }
+
+    function updateGamepadBindDisplay() {
+      document.getElementById("gpLeftBind").textContent = formatGamepadBindList(gamepadBinds.left);
+      document.getElementById("gpDownBind").textContent = formatGamepadBindList(gamepadBinds.down);
+      document.getElementById("gpRightBind").textContent = formatGamepadBindList(gamepadBinds.right);
+      document.getElementById("gpUpBind").textContent = formatGamepadBindList(gamepadBinds.up);
+    }
+
+    function formatGamepadBindList(binds) {
+      if (!binds || binds.length === 0) return "Unbound";
+
+      return binds.map(bind => {
+        if (bind.type === "button") {
+          return `Button ${bind.index}`;
+        }
+
+        if (bind.type === "axis") {
+          return `Axis ${bind.index}${bind.direction < 0 ? "-" : "+"}`;
+        }
+
+        return "Unknown";
+      }).join(" / ");
+    }
+
+    // ==========================
+    // KEYBOARD REBINDING
+    // ==========================
+
+    function beginKeyboardRebind(action) {
+      keyboardRebindAction = action;
+      document.getElementById("keyboardRebindStatus").textContent =
+        `Press a key for ${action.toUpperCase()}...`;
+    }
+
+    function setKeyboardBind(action, code) {
+      keyboardBinds[action] = code;
+      saveKeyboardBinds();
+      updateKeyboardBindDisplay();
+
+      document.getElementById("keyboardRebindStatus").textContent =
+        `${action.toUpperCase()} bound to ${code}.`;
+
+      keyboardRebindAction = null;
+    }
+
+    function updateKeyboardBindDisplay() {
+      document.getElementById("leftBind").textContent = keyboardBinds.left;
+      document.getElementById("downBind").textContent = keyboardBinds.down;
+      document.getElementById("rightBind").textContent = keyboardBinds.right;
+      document.getElementById("upBind").textContent = keyboardBinds.up;
+    }
+
+    function resetKeyboardBinds() {
+      keyboardBinds = { ...defaultKeyboardBinds };
+      saveKeyboardBinds();
+      updateKeyboardBindDisplay();
+      document.getElementById("keyboardRebindStatus").textContent = "Keyboard binds reset.";
+    }
+
+    function saveKeyboardBinds() {
+      localStorage.setItem("tekkenTrainerKeyboardBinds", JSON.stringify(keyboardBinds));
+    }
+
+    function loadKeyboardBinds() {
+      const saved = localStorage.getItem("tekkenTrainerKeyboardBinds");
+
+      if (!saved) {
+        return { ...defaultKeyboardBinds };
+      }
+
+      try {
+        return {
+          ...defaultKeyboardBinds,
+          ...JSON.parse(saved)
+        };
+      } catch {
+        return { ...defaultKeyboardBinds };
+      }
+    }
+
+    function getKeyboardActionFromCode(code) {
+      for (const action in keyboardBinds) {
+        if (keyboardBinds[action] === code) {
+          return action;
+        }
+      }
+
+      return null;
+    }
+
+    // ==========================
+    // DISPLAY
+    // ==========================
+
+    function updateDisplay() {
+      currentInputEl.textContent = lastDirection;
+
+      inputLogEl.innerHTML = inputHistory
+        .map(item => {
+          const gapText = item.gap > 0 ? `<span class="small">(${Math.round(item.gap)}ms)</span>` : "";
+          return `<span class="pill">${item.direction}</span>${gapText}`;
+        })
+        .join(" ");
+
+      cyclesEl.textContent = cleanCycles;
+      missesEl.textContent = misses;
+      slowInputsEl.textContent = slowInputs;
+
+      const elapsedSeconds = Math.max((performance.now() - startTime) / 1000, 0.001);
+      const speed = cleanCycles / elapsedSeconds;
+
+      speedEl.textContent = `${speed.toFixed(2)} cycles/sec`;
+
+      const accuracy = getAccuracy();
+      accuracyEl.textContent = `${accuracy.toFixed(1)}% accuracy`;
+
+      updateButtonStates();
+      updateTargetDisplay();
+      updateBestScore();
+
+      if (isTestRunning) {
+        updateCurrentRunComparison();
+      }
+    }
+
+    function updateTargetDisplay() {
+      const target = getCurrentTarget();
+
+      targetDisplayEl.innerHTML = target.map((input, index) => {
+        const expectedClass = index === targetIndex ? "expected" : "";
+        return `<span class="pill ${expectedClass}">${input}</span>`;
+      }).join(" → ");
+    }
+
+    function updateButtonStates() {
+      const { backHeld, forwardHeld, downHeld, upHeld } = getPhysicalState();
+
+      backStateEl.textContent = backHeld ? "ON" : "OFF";
+      downStateEl.textContent = downHeld ? "ON" : "OFF";
+      forwardStateEl.textContent = forwardHeld ? "ON" : "OFF";
+      upStateEl.textContent = upHeld ? "ON" : "OFF";
+
+      backStateEl.className = backHeld ? "good" : "";
+      downStateEl.className = downHeld ? "good" : "";
+      forwardStateEl.className = forwardHeld ? "good" : "";
+      upStateEl.className = upHeld ? "good" : "";
+    }
+
+    function flashElement(element) {
+      element.classList.remove("flash");
+      void element.offsetWidth;
+      element.classList.add("flash");
+    }
+
+    function getAccuracy() {
+      if (totalAttempts === 0) return 100;
+      return Math.max(0, ((totalAttempts - misses) / totalAttempts) * 100);
+    }
+
+    // ==========================
+    // TIMED TEST
+    // ==========================
+
+    function startTimedTest() {
+      testStartingBest = getSavedBestScore();
+
+      resetTrainer();
+
+      isTestRunning = true;
+      testStartTime = performance.now();
+
+      testStatusEl.textContent = "Test running...";
+      testMeterEl.style.width = "0%";
+
+      updatePreviousBestForTest();
+      updateCurrentRunComparison();
+
+      if (testInterval) {
+        clearInterval(testInterval);
+      }
+
+      testInterval = setInterval(() => {
+        const now = performance.now();
+        const elapsed = now - testStartTime;
+        const progress = Math.min(100, (elapsed / testDurationMs) * 100);
+
+        testMeterEl.style.width = `${progress}%`;
+
+        const secondsLeft = Math.max(0, (testDurationMs - elapsed) / 1000);
+        testStatusEl.textContent = `${secondsLeft.toFixed(1)}s left`;
+
+        updateCurrentRunComparison();
+
+        if (elapsed >= testDurationMs) {
+          endTimedTest();
+        }
+      }, 50);
+    }
+
+    function endTimedTest() {
+      isTestRunning = false;
+
+      if (testInterval) {
+        clearInterval(testInterval);
+        testInterval = null;
+      }
+
+      testMeterEl.style.width = "100%";
+
+      const accuracy = getAccuracy();
+
+      const score = {
+        mode,
+        side,
+        cycles: cleanCycles,
+        misses,
+        slowInputs,
+        accuracy: Number(accuracy.toFixed(1)),
+        date: new Date().toLocaleString()
+      };
+
+      const previousBest = testStartingBest;
+      const wasNewBest = saveBestScore(score);
+
+      if (!previousBest) {
+        testStatusEl.textContent =
+          `Done. First saved score: ${cleanCycles} clean cycles, ${misses} misses, ${slowInputs} slow inputs, ${accuracy.toFixed(1)}% accuracy.`;
+      } else if (wasNewBest) {
+        testStatusEl.textContent =
+          `NEW BEST! ${cleanCycles} clean cycles, beating your old best of ${previousBest.cycles}. Misses: ${misses}, slow inputs: ${slowInputs}, accuracy: ${accuracy.toFixed(1)}%.`;
+      } else {
+        const diff = cleanCycles - previousBest.cycles;
+
+        testStatusEl.textContent =
+          `Done. ${cleanCycles} clean cycles. Previous best was ${previousBest.cycles}, so you were ${Math.abs(diff)} cycle${Math.abs(diff) === 1 ? "" : "s"} ${diff >= 0 ? "ahead/equal" : "behind"}.`;
+      }
+
+      updateBestScore();
+      updatePreviousBestForTest();
+      updateCurrentRunComparison();
+    }
+
+    function updatePreviousBestForTest() {
+      const best = getSavedBestScore();
+
+      if (!best) {
+        previousBestForTestEl.textContent = "No previous best yet";
+        return;
+      }
+
+      previousBestForTestEl.textContent =
+        `${best.cycles} cycles | ${best.misses} misses | ${best.slowInputs} slow | ${best.accuracy}%`;
+    }
+
+    function updateCurrentRunComparison() {
+      const best = testStartingBest || getSavedBestScore();
+
+      if (!best) {
+        currentRunComparisonEl.textContent = `${cleanCycles} cycles — set your first score`;
+        currentRunComparisonEl.className = "medium purple";
+        return;
+      }
+
+      const diff = cleanCycles - best.cycles;
+
+      if (diff > 0) {
+        currentRunComparisonEl.textContent = `Ahead by ${diff} cycle${diff === 1 ? "" : "s"} 🔥`;
+        currentRunComparisonEl.className = "medium good";
+      } else if (diff === 0) {
+        currentRunComparisonEl.textContent = `Tied with best: ${cleanCycles}/${best.cycles}`;
+        currentRunComparisonEl.className = "medium warn";
+      } else {
+        currentRunComparisonEl.textContent = `Behind by ${Math.abs(diff)} cycle${Math.abs(diff) === 1 ? "" : "s"} — ${cleanCycles}/${best.cycles}`;
+        currentRunComparisonEl.className = "medium bad";
+      }
+    }
+
+    // ==========================
+    // METRONOME
+    // ==========================
+
+    function setBpm(value) {
+      bpm = Number(value);
+      document.getElementById("bpmValue").textContent = bpm;
+
+      if (metronomeRunning) {
+        stopMetronome();
+        startMetronome();
+      }
+    }
+
+    function toggleMetronome() {
+      if (metronomeRunning) {
+        stopMetronome();
+      } else {
+        startMetronome();
+      }
+    }
+
+    function startMetronome() {
+      metronomeRunning = true;
+      metronomeBtn.textContent = "Stop Metronome";
+      metronomeBtn.classList.add("active");
+
+      metronomeIndex = 0;
+      tickMetronome();
+
+      const interval = 60000 / bpm;
+
+      metronomeTimer = setInterval(() => {
+        tickMetronome();
+      }, interval);
+    }
+
+    function stopMetronome() {
+      metronomeRunning = false;
+      metronomeBtn.textContent = "Start Metronome";
+      metronomeBtn.classList.remove("active");
+      metronomeBeatEl.textContent = "—";
+
+      if (metronomeTimer) {
+        clearInterval(metronomeTimer);
+        metronomeTimer = null;
+      }
+    }
+
+    function tickMetronome() {
+      const target = getCurrentTarget();
+      const beat = target[metronomeIndex];
+
+      metronomeBeatEl.textContent = beat;
+      flashElement(metronomeBeatEl);
+
+      metronomeIndex++;
+      if (metronomeIndex >= target.length) {
+        metronomeIndex = 0;
+      }
+    }
+
+    // ==========================
+    // TIMING WINDOW
+    // ==========================
+
+    function setTimingWindow(value) {
+      timingWindow = Number(value);
+      document.getElementById("timingValue").textContent = timingWindow;
+      localStorage.setItem("tekkenTrainerTimingWindow", timingWindow);
+    }
+
+    function loadTimingWindow() {
+      const saved = localStorage.getItem("tekkenTrainerTimingWindow");
+
+      if (saved) {
+        timingWindow = Number(saved);
+        document.getElementById("timingWindow").value = timingWindow;
+        document.getElementById("timingValue").textContent = timingWindow;
+      }
+    }
+
+    // ==========================
+    // BEST SCORE
+    // ==========================
+
+    function getBestKey() {
+      return `tekkenTrainerBest_${mode}_${side}`;
+    }
+
+    function getSavedBestScore() {
+      const saved = localStorage.getItem(getBestKey());
+
+      if (!saved) return null;
+
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+
+    function saveBestScore(score) {
+      const key = getBestKey();
+      const oldScore = getSavedBestScore();
+
+      if (!oldScore) {
+        localStorage.setItem(key, JSON.stringify(score));
+        return true;
+      }
+
+      const isBetter =
+        score.cycles > oldScore.cycles ||
+        (
+          score.cycles === oldScore.cycles &&
+          score.misses < oldScore.misses
+        ) ||
+        (
+          score.cycles === oldScore.cycles &&
+          score.misses === oldScore.misses &&
+          score.slowInputs < oldScore.slowInputs
+        ) ||
+        (
+          score.cycles === oldScore.cycles &&
+          score.misses === oldScore.misses &&
+          score.slowInputs === oldScore.slowInputs &&
+          score.accuracy > oldScore.accuracy
+        );
+
+      if (isBetter) {
+        localStorage.setItem(key, JSON.stringify(score));
+        return true;
+      }
+
+      return false;
+    }
+
+    function updateBestScore() {
+      const best = getSavedBestScore();
+
+      if (!best) {
+        bestScoreEl.textContent = "Best: none yet";
+        return;
+      }
+
+      bestScoreEl.textContent =
+        `Best ${mode.toUpperCase()} ${side.toUpperCase()}: ${best.cycles} cycles, ` +
+        `${best.misses} misses, ${best.slowInputs} slow, ${best.accuracy}% accuracy ` +
+        `on ${best.date}`;
+    }
+
+    function clearBestScore() {
+      localStorage.removeItem(getBestKey());
+      updateBestScore();
+      updatePreviousBestForTest();
+      updateCurrentRunComparison();
+      document.getElementById("keyboardRebindStatus").textContent =
+        `Cleared best score for ${mode.toUpperCase()} ${side.toUpperCase()}.`;
+    }
+
+    // ==========================
+    // RESET
+    // ==========================
+
+    function resetTrainer() {
+      for (const key in keyboardPressed) keyboardPressed[key] = false;
+      for (const key in gamepadPressed) gamepadPressed[key] = false;
+      for (const key in pressed) pressed[key] = false;
+
+      lastDirection = "n";
+      previousInputTime = null;
+      inputHistory = [];
+
+      targetIndex = 0;
+      cleanCycles = 0;
+      misses = 0;
+      slowInputs = 0;
+      totalAttempts = 0;
+
+      startTime = performance.now();
+
+      testMeterEl.style.width = "0%";
+
+      if (!isTestRunning) {
+        testStatusEl.textContent = "Not running";
+      }
+
+      updateDisplay();
+      updateCurrentRunComparison();
+    }
+
+    // ==========================
+    // INIT
+    // ==========================
+
+    loadTimingWindow();
+    updateKeyboardBindDisplay();
+    updateGamepadBindDisplay();
+    updateTargetDisplay();
+    updateDisplay();
+    updateBestScore();
+    updatePreviousBestForTest();
+    updateCurrentRunComparison();
+    refreshGamepads();
+    requestAnimationFrame(pollGamepad);
+  </script>
+</body>
+</html>
