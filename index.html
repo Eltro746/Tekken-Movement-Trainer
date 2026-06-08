@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tekken Execution Trainer V6</title>
+  <title>Tekken Execution Trainer V7</title>
   <style>
     :root {
       --bg: #0f1115;
@@ -246,11 +246,46 @@
       .tekken-button { height: 56px; }
     }
 
+
+    .timing-widget {
+      margin-top: 14px;
+      padding: 12px;
+      background: #10131a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .timing-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    .timing-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--blue);
+      transition: width 0.05s linear, background 0.05s linear;
+    }
+
+    .timing-fill.wait { background: var(--yellow); }
+    .timing-fill.ready { background: var(--green); }
+    .timing-fill.late { background: var(--red); }
+    .timing-fill.info { background: var(--blue); }
+
+    .timing-status {
+      margin-top: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
     .footer { color: var(--muted); margin-top: 24px; line-height: 1.5; }
   </style>
 </head>
 <body>
-  <h1>Tekken Execution Trainer V6</h1>
+  <h1>Tekken Execution Trainer V7</h1>
   <p class="small">Movement + frame-tight move trainer. Keyboard, leverless, controller, and fightstick friendly.</p>
 
   <div class="box">
@@ -328,7 +363,15 @@
       <h2>Target / Timing</h2>
       <div id="targetDisplay" class="log"></div>
       <p id="targetNotes" class="small"></p>
-      <div id="frameDisplay" class="frame-line small">Frame data appears here for move modes.</div>
+      <div id="frameDisplay" class="frame-line small">Timing guidance appears here.</div>
+      <div id="timingIndicator" class="timing-widget">
+        <div class="timing-label">
+          <span id="timingTitle">Timing indicator</span>
+          <span id="timingCue" class="warn">—</span>
+        </div>
+        <div class="meter"><div id="timingFill" class="timing-fill info"></div></div>
+        <div id="timingStatus" class="timing-status">Pick a mode and start inputting.</div>
+      </div>
     </div>
 
     <div class="box">
@@ -347,16 +390,6 @@
       <div id="accuracy" class="medium">100% accuracy</div>
       <div id="bestScore" class="small">Best: none yet</div>
     </div>
-  </div>
-
-  <div class="box alt">
-    <h2>Input History</h2>
-    <div id="inputLog" class="log"></div>
-  </div>
-
-  <div class="box alt">
-    <h2>Move Feedback</h2>
-    <div id="moveFeedback" class="log">Pick a move mode and start inputting.</div>
   </div>
 
   <div class="grid">
@@ -396,15 +429,6 @@
   </div>
 
   <div class="grid">
-    <div class="box">
-      <h2>Metronome</h2>
-      <p class="small">Good for movement modes. Move modes display frame timing instead.</p>
-      <div id="metronomeBeat" class="metronome-beat">—</div>
-      <label for="bpm">BPM: <span id="bpmValue">120</span></label>
-      <input id="bpm" type="range" min="60" max="240" value="120" oninput="setBpm(this.value)" />
-      <div class="row"><button id="metronomeBtn" onclick="toggleMetronome()">Start Metronome</button></div>
-    </div>
-
     <div class="box">
       <h2>Keyboard / Leverless Binds</h2>
       <p class="small">Click a bind button, then press the keyboard key your device sends.</p>
@@ -465,7 +489,7 @@
   <div class="box">
     <h2>Notes</h2>
     <p class="small">
-      Frame windows are based on the data you provided: Acid Rain 1 at frame 0, 3 at frames 1–14, 3 at 24–26, 3 at 34–35; TJU taunt cancel forward at i28–31, one neutral frame, then b+2.
+      Frame windows are based on the data you provided. The target/timing panel now shows a clean wait/ready/late indicator instead of dumping frame history.
       EWGF and JFSR are checked frame-tight by requiring the attack button on the same animation frame/tick as the final diagonal direction.
     </p>
     <p class="small">
@@ -521,42 +545,42 @@
         target: ["f", "n", "d", "df+2"],
         help: "EWGF: f, n, d, df+2. Frame-tight check: 2 must be newly pressed on the same frame as df.",
         notes: "Accepts only clean f → n → d → df+2. Late 2 = WGF/failed electric.",
-        frame: "EWGF: final df and 2 must happen on same frame/tick."
+        frame: "EWGF: press 2 on the same tick that ↘ appears."
       },
       pewgf: {
         title: "Perfect EWGF",
         target: ["f", "n/d", "df+2"],
         help: "Perfect EWGF: fastest electric style drill. Requires df+2 same-frame and a very short motion.",
         notes: "Allows f,n,df+2 or f,d,df+2. Middle input must be tight.",
-        frame: "Perfect EWGF: f for ≤2 frames, middle n/d for ≤2 frames, df+2 same-frame."
+        frame: "Perfect EWGF: keep the motion tight, then press 2 on the same tick as ↘."
       },
       jfsr: {
         title: "JFSR",
         target: ["f", "n", "df+4"],
         help: "Hwoarang JFSR: f, n, df+4. Frame-tight check: 4 must be newly pressed on the same frame as df.",
         notes: "Strict mode does not want a full d input before df.",
-        frame: "JFSR: f → n → df+4. Final df and 4 same frame/tick."
+        frame: "JFSR: press 4 on the same tick that ↘ appears."
       },
       acid: {
         title: "Lee Acid Rain",
         target: ["1", "3", "3", "3"],
         help: "Lee Acid Rain: 1,3:3:3. Later 3 inputs are measured from the first 1 input.",
-        notes: "Inputs light up: green = hit window, yellow = too slow/late, red = too fast/early or wrong." ,
-        frame: "Acid Rain windows after 1: 3 at +1–14, 3 at +24–26, 3 at +34–35."
+        notes: "Use the timing indicator: yellow = wait, green = press now, red = missed/late or wrong." ,
+        frame: "Acid Rain: press 1, then press each 3 when the indicator turns green."
       },
       tju: {
         title: "Bryan TJU",
-        target: ["taunt", "f @28-31", "n 1f", "b+2"],
+        target: ["taunt", "f", "n", "b+2"],
         help: "Bryan Taunt Jet Upper: taunt, single-frame forward at i28–31, single neutral frame, then b+2.",
         notes: "Taunt can be the dedicated taunt bind, or 1+3+4 pressed together." ,
-        frame: "TJU: taunt frame 0 → f at +28–31 for 1 frame → n for 1 frame → b+2."
+        frame: "TJU: after taunt, wait for the indicator to turn green, tap forward, return to neutral, then back+2."
       },
       tb4: {
         title: "Bryan Taunt b+4",
         target: ["taunt", "b+4"],
         help: "Bryan taunt b+4: taunt, then b+4 inside a simple post-taunt timing window.",
         notes: "Taunt can be the dedicated taunt bind, or 1+3+4 pressed together. This is intentionally easier than TJU." ,
-        frame: "Taunt b+4 trainer window: b+4 at +28–35 after taunt. Adjustable in code if you want it stricter."
+        frame: "Taunt b+4: after taunt, press back+4 when the indicator turns green."
       }
     };
 
@@ -595,7 +619,7 @@
     let kbdDbLimitTripped = false;
 
     let moveState = makeFreshMoveState();
-    let moveFeedbackLines = [];
+    let latestFeedback = { message: "", type: "info" };
 
     let isTestRunning = false;
     let testStartTime = null;
@@ -628,8 +652,11 @@
     // ==========================
     const currentInputEl = document.getElementById("currentInput");
     const currentButtonsEl = document.getElementById("currentButtons");
-    const inputLogEl = document.getElementById("inputLog");
-    const moveFeedbackEl = document.getElementById("moveFeedback");
+    const timingIndicatorEl = document.getElementById("timingIndicator");
+    const timingTitleEl = document.getElementById("timingTitle");
+    const timingCueEl = document.getElementById("timingCue");
+    const timingFillEl = document.getElementById("timingFill");
+    const timingStatusEl = document.getElementById("timingStatus");
     const cyclesEl = document.getElementById("cycles");
     const missesEl = document.getElementById("misses");
     const slowInputsEl = document.getElementById("slowInputs");
@@ -644,8 +671,8 @@
     const testStatusEl = document.getElementById("testStatus");
     const previousBestForTestEl = document.getElementById("previousBestForTest");
     const currentRunComparisonEl = document.getElementById("currentRunComparison");
-    const metronomeBeatEl = document.getElementById("metronomeBeat");
-    const metronomeBtn = document.getElementById("metronomeBtn");
+    const metronomeBeatEl = null;
+    const metronomeBtn = null;
     const gamepadStatusEl = document.getElementById("gamepadStatus");
     const gamepadDetailsEl = document.getElementById("gamepadDetails");
 
@@ -680,7 +707,7 @@
         attemptStartFrame = frameCounter;
         inputHistory = [];
         eventHistory = [];
-        moveFeedbackLines = [];
+        latestFeedback = { message: "", type: "info" };
         resetTargetStatuses();
       }
     }
@@ -1179,10 +1206,113 @@
     }
 
     function feedback(message, type = "warn") {
-      const label = type === "good" ? "good-pill" : type === "bad" ? "bad-pill" : "warn-pill";
-      moveFeedbackLines = [`<span class="pill ${label}">i${getInputFrame()}</span> ${message}`];
-      if (moveFeedbackLines.length > 8) moveFeedbackLines.shift();
+      latestFeedback = { message, type };
     }
+
+
+    // ==========================
+    // TARGET TIMING INDICATOR
+    // ==========================
+    function setTimingIndicator(title, cue, percent, state, status) {
+      if (!timingIndicatorEl) return;
+      timingTitleEl.textContent = title;
+      timingCueEl.textContent = cue;
+      timingCueEl.className = state === "ready" ? "good" : state === "late" ? "bad" : state === "wait" ? "warn" : "blue";
+      timingFillEl.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+      timingFillEl.className = `timing-fill ${state || "info"}`;
+      timingStatusEl.textContent = status;
+    }
+
+    function updateTimingIndicator() {
+      if (!timingIndicatorEl) return;
+
+      if (mode === "acid") return updateAcidIndicator();
+      if (mode === "tju") return updateTjuIndicator();
+      if (mode === "tb4") return updateTauntB4Indicator();
+
+      if (mode === "ewgf" || mode === "pewgf" || mode === "jfsr") {
+        const message = latestFeedback.message || modeInfo[mode].frame;
+        const state = latestFeedback.type === "good" ? "ready" : latestFeedback.type === "bad" ? "late" : "info";
+        return setTimingIndicator(modeInfo[mode].title, "same tick", latestFeedback.message ? 100 : 35, state, message);
+      }
+
+      const message = mode === "kbd"
+        ? `Movement mode. Use the gap slider and optional db hold limit${kbdDbHoldLimitFrames ? ` (${kbdDbHoldLimitFrames}f)` : ""}.`
+        : "Movement mode. Use the target sequence and gap slider.";
+      setTimingIndicator(modeInfo[mode].title, "movement", 0, "info", message);
+    }
+
+    function updateAcidIndicator() {
+      const windows = [
+        { min: 1, max: 14, label: "1st 3" },
+        { min: 24, max: 26, label: "2nd 3" },
+        { min: 34, max: 35, label: "3rd 3" }
+      ];
+
+      if (moveState.step === 0 || moveState.startFrame === null) {
+        const status = latestFeedback.message || "Press 1 to start Acid Rain.";
+        const state = latestFeedback.type === "bad" ? "late" : latestFeedback.type === "good" ? "ready" : "info";
+        return setTimingIndicator("Lee Acid Rain", "start with 1", latestFeedback.message ? 100 : 0, state, status);
+      }
+
+      const hitIndex = moveState.acidHits.length;
+      if (hitIndex >= windows.length) {
+        return setTimingIndicator("Lee Acid Rain", "complete", 100, "ready", latestFeedback.message || "Acid Rain complete.");
+      }
+
+      const elapsed = frameCounter - moveState.startFrame;
+      const win = windows[hitIndex];
+      const percent = (elapsed / win.max) * 100;
+
+      if (elapsed < win.min) {
+        return setTimingIndicator("Lee Acid Rain", "wait", percent, "wait", `${win.label}: wait for green, then press 3.`);
+      }
+      if (elapsed <= win.max) {
+        return setTimingIndicator("Lee Acid Rain", "PRESS 3", percent, "ready", `${win.label}: press 3 now.`);
+      }
+      return setTimingIndicator("Lee Acid Rain", "late", 100, "late", `${win.label}: late. Restart with 1.`);
+    }
+
+    function updateTjuIndicator() {
+      if (moveState.step === 0 || moveState.tauntStartFrame === null) {
+        const status = latestFeedback.message || "Press Bryan Taunt to start the timing indicator.";
+        const state = latestFeedback.type === "bad" ? "late" : latestFeedback.type === "good" ? "ready" : "info";
+        return setTimingIndicator("Bryan TJU", "start taunt", latestFeedback.message ? 100 : 0, state, status);
+      }
+
+      const elapsed = frameCounter - moveState.tauntStartFrame;
+      if (moveState.step === 1) {
+        const percent = (elapsed / 31) * 100;
+        if (elapsed < 28) return setTimingIndicator("Bryan TJU", "wait", percent, "wait", "Wait for green, then tap forward for one frame.");
+        if (elapsed <= 31) return setTimingIndicator("Bryan TJU", "TAP →", percent, "ready", "Tap forward now, then release to neutral.");
+        return setTimingIndicator("Bryan TJU", "late", 100, "late", "Forward timing missed. Restart taunt.");
+      }
+
+      if (moveState.step === 2) {
+        return setTimingIndicator("Bryan TJU", "neutral", 100, "ready", "Release to neutral for one frame.");
+      }
+
+      if (moveState.step === 3) {
+        return setTimingIndicator("Bryan TJU", "←+2", 100, "ready", "Press back+2 immediately.");
+      }
+
+      setTimingIndicator("Bryan TJU", "—", 0, "info", latestFeedback.message || "Ready.");
+    }
+
+    function updateTauntB4Indicator() {
+      if (moveState.step === 0 || moveState.tauntStartFrame === null) {
+        const status = latestFeedback.message || "Press Bryan Taunt to start the timing indicator.";
+        const state = latestFeedback.type === "bad" ? "late" : latestFeedback.type === "good" ? "ready" : "info";
+        return setTimingIndicator("Bryan Taunt b+4", "start taunt", latestFeedback.message ? 100 : 0, state, status);
+      }
+
+      const elapsed = frameCounter - moveState.tauntStartFrame;
+      const percent = (elapsed / 35) * 100;
+      if (elapsed < 28) return setTimingIndicator("Bryan Taunt b+4", "wait", percent, "wait", "Wait for green, then press back+4.");
+      if (elapsed <= 35) return setTimingIndicator("Bryan Taunt b+4", "←+4", percent, "ready", "Press back+4 now.");
+      return setTimingIndicator("Bryan Taunt b+4", "late", 100, "late", "b+4 timing missed. Restart taunt.");
+    }
+
 
     // ==========================
     // KEYBOARD EVENTS
@@ -1424,15 +1554,7 @@
       const heldButtonLabels = buttonActions.filter(action => pressed[action]).map(buttonLabel);
       currentButtonsEl.textContent = `buttons: ${heldButtonLabels.length ? heldButtonLabels.join("+") : "—"}`;
 
-      const combinedLog = isMoveMode()
-        ? eventHistory.map(item => `<span class="pill">i${item.frame}</span><span class="pill">${item.notation}</span>`).join(" ")
-        : inputHistory.map(item => {
-            const gapText = item.gap > 0 ? `<span class="small">(${Math.round(item.gap)}ms)</span>` : "";
-            return `<span class="pill">i${item.frame}</span><span class="pill">${directionArrow(item.direction)}</span>${gapText}`;
-          }).join(" ");
 
-      inputLogEl.innerHTML = combinedLog;
-      moveFeedbackEl.innerHTML = moveFeedbackLines.length ? moveFeedbackLines.join("<br>") : "Pick a move mode and start inputting.";
       cyclesEl.textContent = cleanCycles;
       missesEl.textContent = misses;
       slowInputsEl.textContent = slowInputs;
@@ -1460,6 +1582,7 @@
         const statusClass = status === "good" ? "step-good" : status === "slow" ? "step-slow" : status === "bad" ? "step-bad" : "step-pending";
         return `<span class="pill ${expectedClass} ${statusClass}">${displayToken(input)}</span>`;
       }).join(" → ");
+      updateTimingIndicator();
     }
 
     function updateButtonStates() {
@@ -1581,6 +1704,7 @@
 
     function startMetronome() {
       metronomeRunning = true;
+      if (!metronomeBtn) return;
       metronomeBtn.textContent = "Stop Metronome";
       metronomeBtn.classList.add("active");
       metronomeIndex = 0;
@@ -1590,6 +1714,7 @@
 
     function stopMetronome() {
       metronomeRunning = false;
+      if (!metronomeBtn || !metronomeBeatEl) return;
       metronomeBtn.textContent = "Start Metronome";
       metronomeBtn.classList.remove("active");
       metronomeBeatEl.textContent = "—";
@@ -1686,7 +1811,7 @@
       previousInputTime = null;
       inputHistory = [];
       eventHistory = [];
-      moveFeedbackLines = [];
+      latestFeedback = { message: "", type: "info" };
       resetMoveState();
       targetIndex = 0;
       resetTargetStatuses();
