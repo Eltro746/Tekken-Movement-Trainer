@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tekken Execution Trainer V4</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --panel: #1a1d24;
+      --panel2: #222631;
+      --text: #f1f1f1;
+      --muted: #aaa;
+      --green: #8cff8c;
+      --red: #ff7777;
+      --yellow: #ffd166;
+      --blue: #82cfff;
+      --purple: #c792ea;
+      --border: #343946;
+      --black: #08090c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+    }
+
+    h1 { color: var(--green); margin: 0 0 8px; }
+    h2 { margin-top: 0; color: var(--blue); }
+    h3 { margin-bottom: 8px; color: var(--yellow); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 16px;
+    }
+
+    .box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .box.alt { background: var(--panel2); }
+    .big { font-size: 44px; font-weight: bold; line-height: 1.2; }
+    .medium { font-size: 24px; font-weight: bold; }
+    .small { color: var(--muted); font-size: 14px; line-height: 1.45; }
+    .tiny { color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .good { color: var(--green); }
+    .bad { color: var(--red); }
+    .warn { color: var(--yellow); }
+    .blue { color: var(--blue); }
+    .purple { color: var(--purple); }
+
+    button, select, input {
+      background: #2c3240;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 15px;
+      margin: 4px;
+    }
+
+    button { cursor: pointer; }
+    button:hover { background: #394052; }
+    button.active { outline: 2px solid var(--green); color: var(--green); }
+    button.danger { background: #452222; }
+    button.danger:hover { background: #5a2b2b; }
+
+    label { display: block; margin-top: 8px; color: var(--muted); }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+
+    .log {
+      font-size: 18px;
+      line-height: 1.7;
+      word-wrap: break-word;
+      min-height: 52px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      margin: 2px;
+      background: #303642;
+      border: 1px solid var(--border);
+      font-weight: bold;
+    }
+
+    .pill.good-pill { border-color: var(--green); color: var(--green); }
+    .pill.bad-pill { border-color: var(--red); color: var(--red); }
+    .pill.warn-pill { border-color: var(--yellow); color: var(--yellow); }
+    .expected { outline: 2px solid var(--yellow); }
+
+    .kbd-key {
+      display: inline-block;
+      min-width: 90px;
+      text-align: center;
+      padding: 8px;
+      margin: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #111;
+      font-weight: bold;
+    }
+
+    .score-card, .device-card {
+      background: #10131a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+
+    .meter {
+      width: 100%;
+      height: 16px;
+      background: #111;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .meter-fill { height: 100%; width: 0%; background: var(--green); transition: width 0.1s linear; }
+
+    .flash { animation: flash 0.15s; }
+    @keyframes flash { from { background: #3a4b2f; } to { background: var(--panel); } }
+
+    .metronome-beat {
+      font-size: 54px;
+      font-weight: bold;
+      color: var(--yellow);
+      text-align: center;
+      min-height: 70px;
+    }
+
+    .frame-line {
+      font-family: Consolas, monospace;
+      background: var(--black);
+      border: 1px solid var(--border);
+      padding: 10px;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+
+
+
+    .virtual-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+      margin-top: 12px;
+    }
+
+    .stick-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 74px);
+      grid-template-rows: repeat(3, 58px);
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .input-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      background: #10131a;
+      border-radius: 12px;
+      font-weight: bold;
+      color: var(--muted);
+      transition: transform 0.04s linear, border-color 0.04s linear, background 0.04s linear, color 0.04s linear;
+      min-height: 58px;
+    }
+
+    .input-cell .arrow {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .input-cell .notation {
+      font-size: 11px;
+      margin-top: 3px;
+      letter-spacing: 0.5px;
+    }
+
+    .input-cell.active {
+      background: #223621;
+      border-color: var(--green);
+      color: var(--green);
+      transform: scale(1.04);
+      box-shadow: 0 0 12px rgba(140, 255, 140, 0.22);
+    }
+
+    .button-pad {
+      display: grid;
+      grid-template-columns: repeat(2, 82px);
+      gap: 10px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .tekken-button {
+      height: 64px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #10131a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      font-weight: bold;
+      color: var(--muted);
+      transition: transform 0.04s linear, border-color 0.04s linear, background 0.04s linear, color 0.04s linear;
+    }
+
+    .tekken-button .btn-main { font-size: 24px; line-height: 1; }
+    .tekken-button .btn-sub { font-size: 11px; margin-top: 4px; }
+
+    .tekken-button.active {
+      background: #282044;
+      border-color: var(--purple);
+      color: var(--purple);
+      transform: scale(1.05);
+      box-shadow: 0 0 12px rgba(199, 146, 234, 0.2);
+    }
+
+    @media (max-width: 680px) {
+      .virtual-panel { grid-template-columns: 1fr; }
+      .stick-grid { grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(3, 52px); }
+      .button-pad { grid-template-columns: repeat(4, 62px); }
+      .tekken-button { height: 56px; }
+    }
+
+    .footer { color: var(--muted); margin-top: 24px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1>Tekken Execution Trainer V4</h1>
+  <p class="small">Movement + frame-tight move trainer. Keyboard, leverless, controller, and fightstick friendly.</p>
+
+  <div class="box">
+    <div class="medium">Mode</div>
+    <div class="row">
+      <button id="mode_kbd" class="active" onclick="setMode('kbd')">KBD</button>
+      <button id="mode_wave" onclick="setMode('wave')">Wave Dash</button>
+      <button id="mode_ewgf" onclick="setMode('ewgf')">EWGF</button>
+      <button id="mode_pewgf" onclick="setMode('pewgf')">Perfect EWGF</button>
+      <button id="mode_jfsr" onclick="setMode('jfsr')">JFSR</button>
+      <button id="mode_acid" onclick="setMode('acid')">Lee Acid Rain</button>
+      <button id="mode_tju" onclick="setMode('tju')">Bryan TJU</button>
+      <button id="mode_tb4" onclick="setMode('tb4')">Bryan Taunt b+4</button>
+
+      <select id="sideSelect" onchange="setSide(this.value)">
+        <option value="p1">P1 Side</option>
+        <option value="p2">P2 Side</option>
+      </select>
+    </div>
+
+    <p id="modeHelp" class="small"></p>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <h2>Live Input</h2>
+      <div id="currentInput" class="big">n</div>
+      <div id="currentButtons" class="medium purple">buttons: —</div>
+      <p class="small">Direction is shown after P1/P2 conversion. P2 mirrors left/right automatically.</p>
+
+      <div class="virtual-panel">
+        <div>
+          <div class="small">Direction display</div>
+          <div class="stick-grid" aria-label="Directional input display">
+            <div id="cell_ub" class="input-cell"><span class="arrow">↖</span><span class="notation">UB</span></div>
+            <div id="cell_u" class="input-cell"><span class="arrow">↑</span><span class="notation">U</span></div>
+            <div id="cell_uf" class="input-cell"><span class="arrow">↗</span><span class="notation">UF</span></div>
+            <div id="cell_b" class="input-cell"><span class="arrow">←</span><span class="notation">B</span></div>
+            <div id="cell_n" class="input-cell active"><span class="arrow">•</span><span class="notation">N</span></div>
+            <div id="cell_f" class="input-cell"><span class="arrow">→</span><span class="notation">F</span></div>
+            <div id="cell_db" class="input-cell"><span class="arrow">↙</span><span class="notation">DB</span></div>
+            <div id="cell_d" class="input-cell"><span class="arrow">↓</span><span class="notation">D</span></div>
+            <div id="cell_df" class="input-cell"><span class="arrow">↘</span><span class="notation">DF</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="small">Tekken buttons</div>
+          <div class="button-pad" aria-label="Tekken button input display">
+            <div id="button_b1" class="tekken-button"><span class="btn-main">1</span><span class="btn-sub">LP</span></div>
+            <div id="button_b2" class="tekken-button"><span class="btn-main">2</span><span class="btn-sub">RP</span></div>
+            <div id="button_b3" class="tekken-button"><span class="btn-main">3</span><span class="btn-sub">LK</span></div>
+            <div id="button_b4" class="tekken-button"><span class="btn-main">4</span><span class="btn-sub">RK</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <span class="kbd-key">Back: <span id="backState">OFF</span></span>
+        <span class="kbd-key">Down: <span id="downState">OFF</span></span>
+        <span class="kbd-key">Forward: <span id="forwardState">OFF</span></span>
+        <span class="kbd-key">Up: <span id="upState">OFF</span></span>
+      </div>
+      <div class="row">
+        <span class="kbd-key">1: <span id="btn1State">OFF</span></span>
+        <span class="kbd-key">2: <span id="btn2State">OFF</span></span>
+        <span class="kbd-key">3: <span id="btn3State">OFF</span></span>
+        <span class="kbd-key">4: <span id="btn4State">OFF</span></span>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>Target / Timing</h2>
+      <div id="targetDisplay" class="log"></div>
+      <p id="targetNotes" class="small"></p>
+      <div id="frameDisplay" class="frame-line small">Frame data appears here for move modes.</div>
+    </div>
+
+    <div class="box">
+      <h2>Stats</h2>
+      <div>Clean successes / cycles</div>
+      <div id="cycles" class="big good">0</div>
+      <div>Misses</div>
+      <div id="misses" class="big bad">0</div>
+      <div>Slow inputs</div>
+      <div id="slowInputs" class="big warn">0</div>
+    </div>
+
+    <div class="box">
+      <h2>Speed / Accuracy</h2>
+      <div id="speed" class="medium">0.00 /sec</div>
+      <div id="accuracy" class="medium">100% accuracy</div>
+      <div id="bestScore" class="small">Best: none yet</div>
+    </div>
+  </div>
+
+  <div class="box alt">
+    <h2>Input History</h2>
+    <div id="inputLog" class="log"></div>
+  </div>
+
+  <div class="box alt">
+    <h2>Move Feedback</h2>
+    <div id="moveFeedback" class="log">Pick a move mode and start inputting.</div>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <h2>10 Second Test</h2>
+      <p class="small">This resets your score and counts clean cycles/successes for 10 seconds.</p>
+      <button onclick="startTimedTest()">Start 10s Test</button>
+      <button onclick="resetTrainer()">Reset</button>
+
+      <div class="score-card">
+        <div class="small">Previous best for this mode/side</div>
+        <div id="previousBestForTest" class="medium purple">No previous best yet</div>
+      </div>
+
+      <div class="score-card">
+        <div class="small">Current run vs previous best</div>
+        <div id="currentRunComparison" class="medium">Start a test</div>
+      </div>
+
+      <div class="meter" style="margin-top: 14px;"><div id="testMeter" class="meter-fill"></div></div>
+      <p id="testStatus" class="small">Not running</p>
+    </div>
+
+    <div class="box">
+      <h2>Timing Window</h2>
+      <p class="small">For KBD/wavedash only: if the gap between directional inputs is above this, it counts as slow.</p>
+      <label for="timingWindow">Max gap between inputs: <span id="timingValue">170</span> ms</label>
+      <input id="timingWindow" type="range" min="70" max="300" value="170" oninput="setTimingWindow(this.value)" />
+      <p class="small">Move modes use fixed frame windows instead of this slider.</p>
+
+      <label for="kbdDbHoldLimit">KBD db hold limit: <span id="kbdDbHoldValue">Off</span></label>
+      <input id="kbdDbHoldLimit" type="range" min="0" max="12" value="0" oninput="setKbdDbHoldLimit(this.value)" />
+      <p class="small">
+        KBD-only: set how many frames <strong>db</strong> is allowed to be held. 0 = off. If db is held longer than the limit, the cycle is marked as a miss/slow input.
+      </p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <h2>Metronome</h2>
+      <p class="small">Good for movement modes. Move modes display frame timing instead.</p>
+      <div id="metronomeBeat" class="metronome-beat">—</div>
+      <label for="bpm">BPM: <span id="bpmValue">120</span></label>
+      <input id="bpm" type="range" min="60" max="240" value="120" oninput="setBpm(this.value)" />
+      <div class="row"><button id="metronomeBtn" onclick="toggleMetronome()">Start Metronome</button></div>
+    </div>
+
+    <div class="box">
+      <h2>Keyboard / Leverless Binds</h2>
+      <p class="small">Click a bind button, then press the keyboard key your device sends.</p>
+      <h3>Directions</h3>
+      <div class="row"><button onclick="beginKeyboardRebind('left')">Bind Left</button><span id="leftBind" class="kbd-key">KeyA</span></div>
+      <div class="row"><button onclick="beginKeyboardRebind('down')">Bind Down</button><span id="downBind" class="kbd-key">KeyS</span></div>
+      <div class="row"><button onclick="beginKeyboardRebind('right')">Bind Right</button><span id="rightBind" class="kbd-key">KeyD</span></div>
+      <div class="row"><button onclick="beginKeyboardRebind('up')">Bind Up</button><span id="upBind" class="kbd-key">KeyW</span></div>
+
+      <h3>Tekken Buttons</h3>
+      <div class="row"><button onclick="beginKeyboardRebind('b1')">Bind 1 / LP</button><span id="b1Bind" class="kbd-key">KeyJ</span></div>
+      <div class="row"><button onclick="beginKeyboardRebind('b2')">Bind 2 / RP</button><span id="b2Bind" class="kbd-key">KeyI</span></div>
+      <div class="row"><button onclick="beginKeyboardRebind('b3')">Bind 3 / LK</button><span id="b3Bind" class="kbd-key">KeyK</span></div>
+      <div class="row"><button onclick="beginKeyboardRebind('b4')">Bind 4 / RK</button><span id="b4Bind" class="kbd-key">KeyL</span></div>
+
+      <div class="row">
+        <button class="danger" onclick="resetKeyboardBinds()">Reset Keyboard Binds</button>
+        <button class="danger" onclick="clearBestScore()">Clear Best For Current Mode</button>
+      </div>
+      <p id="keyboardRebindStatus" class="small">No keyboard rebind selected.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <h2>Controller / Fightstick Support</h2>
+      <p class="small">Plug in a controller, fightstick, or leverless in controller mode, then press any button.</p>
+      <div class="device-card">
+        <div class="small">Connected device</div>
+        <div id="gamepadStatus" class="medium warn">No gamepad detected</div>
+        <div id="gamepadDetails" class="small">Press a button on your device after plugging it in.</div>
+      </div>
+      <div class="row"><button onclick="refreshGamepads()">Refresh Gamepads</button></div>
+      <p class="small">Common mappings are auto-filled, but you can rebind them below.</p>
+    </div>
+
+    <div class="box">
+      <h2>Controller / Fightstick Binds</h2>
+      <h3>Directions</h3>
+      <div class="row"><button onclick="beginGamepadRebind('left')">Bind GP Left</button><span id="gpLeftBind" class="kbd-key">Button 14 / Axis 0-</span></div>
+      <div class="row"><button onclick="beginGamepadRebind('down')">Bind GP Down</button><span id="gpDownBind" class="kbd-key">Button 13 / Axis 1+</span></div>
+      <div class="row"><button onclick="beginGamepadRebind('right')">Bind GP Right</button><span id="gpRightBind" class="kbd-key">Button 15 / Axis 0+</span></div>
+      <div class="row"><button onclick="beginGamepadRebind('up')">Bind GP Up</button><span id="gpUpBind" class="kbd-key">Button 12 / Axis 1-</span></div>
+
+      <h3>Tekken Buttons</h3>
+      <div class="row"><button onclick="beginGamepadRebind('b1')">Bind GP 1 / LP</button><span id="gpB1Bind" class="kbd-key">Button 2</span></div>
+      <div class="row"><button onclick="beginGamepadRebind('b2')">Bind GP 2 / RP</button><span id="gpB2Bind" class="kbd-key">Button 3</span></div>
+      <div class="row"><button onclick="beginGamepadRebind('b3')">Bind GP 3 / LK</button><span id="gpB3Bind" class="kbd-key">Button 0</span></div>
+      <div class="row"><button onclick="beginGamepadRebind('b4')">Bind GP 4 / RK</button><span id="gpB4Bind" class="kbd-key">Button 1</span></div>
+
+      <div class="row"><button class="danger" onclick="resetGamepadBinds()">Reset Controller Binds</button></div>
+      <p id="gamepadRebindStatus" class="small">No controller rebind selected.</p>
+    </div>
+  </div>
+
+  <div class="box">
+    <h2>Notes</h2>
+    <p class="small">
+      Frame windows are based on the data you provided: Acid Rain 1 at frame 0, 3 at frames 1–14, 3 at 24–26, 3 at 34–35; TJU taunt cancel forward at i28–31, one neutral frame, then b+2.
+      EWGF and JFSR are checked frame-tight by requiring the attack button on the same animation frame/tick as the final diagonal direction.
+    </p>
+    <p class="small">
+      Browser input timing is not a perfect Tekken engine. This is a muscle-memory trainer using requestAnimationFrame as the frame clock, usually about 60 FPS.
+    </p>
+  </div>
+
+  <script>
+    // ==========================
+    // DEFAULTS
+    // ==========================
+    const defaultKeyboardBinds = {
+      left: "KeyA", down: "KeyS", right: "KeyD", up: "KeyW",
+      b1: "KeyJ", b2: "KeyI", b3: "KeyK", b4: "KeyL"
+    };
+
+    const defaultGamepadBinds = {
+      left: [{ type: "button", index: 14 }, { type: "axis", index: 0, direction: -1 }],
+      down: [{ type: "button", index: 13 }, { type: "axis", index: 1, direction: 1 }],
+      right: [{ type: "button", index: 15 }, { type: "axis", index: 0, direction: 1 }],
+      up: [{ type: "button", index: 12 }, { type: "axis", index: 1, direction: -1 }],
+      b1: [{ type: "button", index: 2 }],
+      b2: [{ type: "button", index: 3 }],
+      b3: [{ type: "button", index: 0 }],
+      b4: [{ type: "button", index: 1 }]
+    };
+
+    const axisThreshold = 0.55;
+    const buttonThreshold = 0.5;
+    const actionNames = ["left", "down", "right", "up", "b1", "b2", "b3", "b4"];
+    const buttonActions = ["b1", "b2", "b3", "b4"];
+
+    const frameMoveModes = ["ewgf", "pewgf", "jfsr", "acid", "tju", "tb4"];
+
+    const modeInfo = {
+      kbd: {
+        title: "KBD",
+        target: ["b", "db", "b", "n"],
+        help: "KBD target: b → db → b → n. Counts clean cycles.",
+        notes: "Yellow outline = next expected input.",
+        frame: "Movement mode: uses ms timing slider."
+      },
+      wave: {
+        title: "Wave Dash",
+        target: ["f", "n", "d", "df", "n"],
+        help: "Wave dash target: tap f → neutral → d → roll to df → neutral. Accepts a few practical variants.",
+        notes: "Main target shown. Accepted variants include f,n,d,df,n and f,d,df,n.",
+        frame: "Movement mode: uses ms timing slider."
+      },
+      ewgf: {
+        title: "EWGF",
+        target: ["f", "n", "d", "df+2"],
+        help: "EWGF: f, n, d, df+2. Frame-tight check: 2 must be newly pressed on the same frame as df.",
+        notes: "Accepts only clean f → n → d → df+2. Late 2 = WGF/failed electric.",
+        frame: "EWGF: final df and 2 must happen on same frame/tick."
+      },
+      pewgf: {
+        title: "Perfect EWGF",
+        target: ["f", "n/d", "df+2"],
+        help: "Perfect EWGF: fastest electric style drill. Requires df+2 same-frame and a very short motion.",
+        notes: "Allows f,n,df+2 or f,d,df+2. Middle input must be tight.",
+        frame: "Perfect EWGF: f for ≤2 frames, middle n/d for ≤2 frames, df+2 same-frame."
+      },
+      jfsr: {
+        title: "JFSR",
+        target: ["f", "n", "df+4"],
+        help: "Hwoarang JFSR: f, n, df+4. Frame-tight check: 4 must be newly pressed on the same frame as df.",
+        notes: "Strict mode does not want a full d input before df.",
+        frame: "JFSR: f → n → df+4. Final df and 4 same frame/tick."
+      },
+      acid: {
+        title: "Lee Acid Rain",
+        target: ["1 @0", "3 @1-14", "3 @24-26", "3 @34-35"],
+        help: "Lee Acid Rain: 1,3:3:3. Later 3 inputs are measured from the first 1 input.",
+        notes: "This mode reports each 3 as perfect, early, or late by frame.",
+        frame: "Acid Rain windows after 1: 3 at +1–14, 3 at +24–26, 3 at +34–35."
+      },
+      tju: {
+        title: "Bryan TJU",
+        target: ["taunt", "f @28-31", "n 1f", "b+2"],
+        help: "Bryan Taunt Jet Upper: taunt, single-frame forward at i28–31, single neutral frame, then b+2.",
+        notes: "Taunt = 1+3+4. Trainer starts counting when 1,3,4 are pressed together.",
+        frame: "TJU: taunt frame 0 → f at +28–31 for 1 frame → n for 1 frame → b+2."
+      },
+      tb4: {
+        title: "Bryan Taunt b+4",
+        target: ["taunt", "b+4"],
+        help: "Bryan taunt b+4: taunt, then b+4 inside a simple post-taunt timing window.",
+        notes: "Taunt = 1+3+4. This is intentionally easier than TJU.",
+        frame: "Taunt b+4 trainer window: b+4 at +28–35 after taunt. Adjustable in code if you want it stricter."
+      }
+    };
+
+    // ==========================
+    // STATE
+    // ==========================
+    let keyboardBinds = loadKeyboardBinds();
+    let gamepadBinds = loadGamepadBinds();
+
+    const keyboardPressed = Object.fromEntries(actionNames.map(action => [action, false]));
+    const gamepadPressed = Object.fromEntries(actionNames.map(action => [action, false]));
+    const pressed = Object.fromEntries(actionNames.map(action => [action, false]));
+    const prevPressed = Object.fromEntries(actionNames.map(action => [action, false]));
+
+    let selectedGamepadIndex = null;
+    let mode = "kbd";
+    let side = "p1";
+
+    let frameCounter = 0;
+    let lastDirection = "n";
+    let previousInputTime = null;
+    let inputHistory = [];
+    let eventHistory = [];
+
+    let targetIndex = 0;
+    let cleanCycles = 0;
+    let misses = 0;
+    let slowInputs = 0;
+    let totalAttempts = 0;
+    let startTime = performance.now();
+    let timingWindow = 170;
+    let kbdDbHoldLimitFrames = 0;
+    let kbdDbStartFrame = null;
+    let kbdDbLimitTripped = false;
+
+    let moveState = makeFreshMoveState();
+    let moveFeedbackLines = [];
+
+    let isTestRunning = false;
+    let testStartTime = null;
+    let testDurationMs = 10000;
+    let testInterval = null;
+    let testStartingBest = null;
+
+    let keyboardRebindAction = null;
+    let gamepadRebindAction = null;
+    let gamepadRebindStartSnapshot = null;
+
+    let metronomeRunning = false;
+    let metronomeTimer = null;
+    let metronomeIndex = 0;
+    let bpm = 120;
+
+    const alternateTargets = {
+      wave: [
+        ["f", "n", "d", "df", "n"],
+        ["f", "n", "d", "df", "f", "n"],
+        ["f", "df", "f", "n"],
+        ["f", "df", "n"],
+        ["f", "d", "df", "n"],
+        ["f", "d", "df", "f", "n"]
+      ]
+    };
+
+    // ==========================
+    // ELEMENTS
+    // ==========================
+    const currentInputEl = document.getElementById("currentInput");
+    const currentButtonsEl = document.getElementById("currentButtons");
+    const inputLogEl = document.getElementById("inputLog");
+    const moveFeedbackEl = document.getElementById("moveFeedback");
+    const cyclesEl = document.getElementById("cycles");
+    const missesEl = document.getElementById("misses");
+    const slowInputsEl = document.getElementById("slowInputs");
+    const speedEl = document.getElementById("speed");
+    const accuracyEl = document.getElementById("accuracy");
+    const bestScoreEl = document.getElementById("bestScore");
+    const targetDisplayEl = document.getElementById("targetDisplay");
+    const targetNotesEl = document.getElementById("targetNotes");
+    const frameDisplayEl = document.getElementById("frameDisplay");
+    const modeHelpEl = document.getElementById("modeHelp");
+    const testMeterEl = document.getElementById("testMeter");
+    const testStatusEl = document.getElementById("testStatus");
+    const previousBestForTestEl = document.getElementById("previousBestForTest");
+    const currentRunComparisonEl = document.getElementById("currentRunComparison");
+    const metronomeBeatEl = document.getElementById("metronomeBeat");
+    const metronomeBtn = document.getElementById("metronomeBtn");
+    const gamepadStatusEl = document.getElementById("gamepadStatus");
+    const gamepadDetailsEl = document.getElementById("gamepadDetails");
+
+    // ==========================
+    // MODE / SIDE
+    // ==========================
+    function setMode(newMode) {
+      mode = newMode;
+      for (const key in modeInfo) {
+        const btn = document.getElementById(`mode_${key}`);
+        if (btn) btn.classList.toggle("active", mode === key);
+      }
+      resetTrainer();
+      updateTargetDisplay();
+      updateBestScore();
+      updatePreviousBestForTest();
+    }
+
+    function setSide(newSide) {
+      side = newSide;
+      resetTrainer();
+      updateTargetDisplay();
+      updateBestScore();
+      updatePreviousBestForTest();
+    }
+
+    function getCurrentTarget() { return modeInfo[mode].target; }
+    function isMoveMode() { return frameMoveModes.includes(mode); }
+
+    // ==========================
+    // FRAME + INPUT LOOP
+    // ==========================
+    function mainLoop() {
+      frameCounter++;
+      pollGamepadOnce();
+      combineInputs();
+      processFrameInput();
+      requestAnimationFrame(mainLoop);
+    }
+
+    function combineInputs() {
+      for (const action of actionNames) {
+        prevPressed[action] = pressed[action];
+        pressed[action] = Boolean(keyboardPressed[action] || gamepadPressed[action]);
+      }
+    }
+
+    function processFrameInput() {
+      const direction = getDirection();
+      const newlyPressedButtons = buttonActions.filter(action => pressed[action] && !prevPressed[action]);
+      const heldButtons = buttonActions.filter(action => pressed[action]);
+      const directionChanged = direction !== lastDirection;
+
+      if (directionChanged) registerDirection(direction);
+
+      if (newlyPressedButtons.length || directionChanged) {
+        registerEvent(direction, newlyPressedButtons, heldButtons);
+      }
+
+      if (isMoveMode()) checkMoveFrame(direction, newlyPressedButtons, heldButtons, directionChanged);
+      checkKbdDbHoldLimit(direction);
+      updateDisplay();
+    }
+
+    function registerDirection(direction) {
+      const now = performance.now();
+      const gap = previousInputTime === null ? 0 : now - previousInputTime;
+      lastDirection = direction;
+      previousInputTime = now;
+
+      inputHistory.push({ direction, time: now, gap, frame: frameCounter });
+      if (inputHistory.length > 55) inputHistory.shift();
+
+      if (!isMoveMode()) checkTarget(direction, gap);
+    }
+
+    function registerEvent(direction, newlyPressedButtons, heldButtons) {
+      const event = {
+        frame: frameCounter,
+        direction,
+        newButtons: newlyPressedButtons.map(buttonLabel),
+        heldButtons: heldButtons.map(buttonLabel),
+        notation: formatNotation(direction, heldButtons.map(buttonLabel), newlyPressedButtons.map(buttonLabel))
+      };
+      eventHistory.push(event);
+      if (eventHistory.length > 45) eventHistory.shift();
+    }
+
+    function buttonLabel(action) { return action.replace("b", ""); }
+    function hasNew(newlyPressedButtons, action) { return newlyPressedButtons.includes(action); }
+    function hasHeld(heldButtons, action) { return heldButtons.includes(action); }
+
+    function formatNotation(direction, heldButtonLabels, newButtonLabels = []) {
+      const buttons = heldButtonLabels.length ? `+${heldButtonLabels.join("+")}` : "";
+      const fresh = newButtonLabels.length ? ` <span class='tiny'>new:${newButtonLabels.join("+")}</span>` : "";
+      return `${direction}${buttons}${fresh}`;
+    }
+
+    // ==========================
+    // DIRECTION HELPERS
+    // ==========================
+    function getPhysicalState() {
+      const leftHeld = pressed.left;
+      const rightHeld = pressed.right;
+      const downHeld = pressed.down;
+      const upHeld = pressed.up;
+      return {
+        backHeld: side === "p1" ? leftHeld : rightHeld,
+        forwardHeld: side === "p1" ? rightHeld : leftHeld,
+        downHeld,
+        upHeld
+      };
+    }
+
+    function getDirection() {
+      const { backHeld, forwardHeld, downHeld, upHeld } = getPhysicalState();
+      if (backHeld && forwardHeld && downHeld) return "d";
+      if (backHeld && forwardHeld) return "n";
+      if (backHeld && downHeld) return "db";
+      if (forwardHeld && downHeld) return "df";
+      if (backHeld) return "b";
+      if (forwardHeld) return "f";
+      if (downHeld) return "d";
+      if (upHeld) return "u";
+      return "n";
+    }
+
+    // ==========================
+    // MOVEMENT TARGET CHECKING
+    // ==========================
+    function checkTarget(direction, gap) {
+      const target = getCurrentTarget();
+      const expected = target[targetIndex];
+      if (targetIndex === 0 && direction === "n") return;
+      totalAttempts++;
+      if (gap > timingWindow && previousInputTime !== null) slowInputs++;
+
+      if (mode === "kbd") return checkStrictTarget(direction, target, expected);
+      if (mode === "wave") return checkWaveTarget(direction);
+    }
+
+    function checkKbdDbHoldLimit(direction) {
+      if (mode !== "kbd" || kbdDbHoldLimitFrames <= 0) {
+        kbdDbStartFrame = null;
+        kbdDbLimitTripped = false;
+        return;
+      }
+
+      if (direction === "db") {
+        if (kbdDbStartFrame === null) {
+          kbdDbStartFrame = frameCounter;
+          kbdDbLimitTripped = false;
+          return;
+        }
+
+        const heldFrames = frameCounter - kbdDbStartFrame + 1;
+        if (!kbdDbLimitTripped && heldFrames > kbdDbHoldLimitFrames) {
+          kbdDbLimitTripped = true;
+          slowInputs++;
+          misses++;
+          totalAttempts++;
+          targetIndex = 0;
+          feedback(`KBD db held ${heldFrames} frames. Limit is ${kbdDbHoldLimitFrames}. Cycle reset.`, "bad");
+          flashElement(missesEl);
+        }
+        return;
+      }
+
+      kbdDbStartFrame = null;
+      kbdDbLimitTripped = false;
+    }
+
+    function checkStrictTarget(direction, target, expected) {
+      if (direction === expected) {
+        targetIndex++;
+        if (targetIndex >= target.length) addSuccess("Clean cycle");
+        return;
+      }
+      addMiss(`Expected ${expected}, got ${direction}`);
+      targetIndex = direction === target[0] ? 1 : 0;
+    }
+
+    function checkWaveTarget(direction) {
+      const recent = inputHistory.map(item => item.direction);
+      for (const pattern of alternateTargets.wave) {
+        if (endsWithPattern(recent, pattern)) {
+          addSuccess(`Wave dash: ${pattern.join(" → ")}`);
+          return;
+        }
+      }
+
+      const target = getCurrentTarget();
+      const expected = target[targetIndex];
+      if (direction === expected) {
+        targetIndex++;
+        if (targetIndex >= target.length) targetIndex = 0;
+        return;
+      }
+
+      if (!["f", "n", "d", "df"].includes(direction)) {
+        addMiss(`Invalid wave input: ${direction}`);
+        targetIndex = 0;
+        return;
+      }
+
+      if (direction === "f") targetIndex = 1;
+    }
+
+    function endsWithPattern(history, pattern) {
+      if (history.length < pattern.length) return false;
+      const recent = history.slice(-pattern.length);
+      return pattern.every((item, index) => recent[index] === item);
+    }
+
+    // ==========================
+    // MOVE MODE CHECKS
+    // ==========================
+    function makeFreshMoveState() {
+      return {
+        step: 0,
+        startFrame: null,
+        lastStepFrame: null,
+        fFrame: null,
+        middleFrame: null,
+        tjuForwardFrame: null,
+        tjuNeutralFrame: null,
+        acidHits: [],
+        tauntStartFrame: null,
+        lastDirectionFrame: null,
+        lastDirection: "n"
+      };
+    }
+
+    function resetMoveState() { moveState = makeFreshMoveState(); }
+
+    function checkMoveFrame(direction, newlyPressedButtons, heldButtons, directionChanged) {
+      switch (mode) {
+        case "ewgf": checkEWGF(direction, newlyPressedButtons); break;
+        case "pewgf": checkPerfectEWGF(direction, newlyPressedButtons, directionChanged); break;
+        case "jfsr": checkJFSR(direction, newlyPressedButtons); break;
+        case "acid": checkAcidRain(direction, newlyPressedButtons); break;
+        case "tju": checkTJU(direction, newlyPressedButtons, heldButtons); break;
+        case "tb4": checkTauntB4(direction, newlyPressedButtons, heldButtons); break;
+      }
+    }
+
+    function checkEWGF(direction, newlyPressedButtons) {
+      if (moveState.step === 0 && direction === "f") return setMoveStep(1, "f detected");
+      if (moveState.step === 1 && direction === "n") return setMoveStep(2, "neutral detected");
+      if (moveState.step === 2 && direction === "d") return setMoveStep(3, "down detected");
+      if (moveState.step === 3 && direction === "df") {
+        if (hasNew(newlyPressedButtons, "b2")) return moveSuccess("EWGF! df+2 same-frame.");
+        return moveFail("df reached, but 2 was not pressed on that exact frame. That is late/non-electric.");
+      }
+      if (hasNew(newlyPressedButtons, "b2") && direction !== "df") return moveFail("2 was pressed before df. Need df+2 on the same frame.");
+      if (moveState.step > 0 && !["f", "n", "d", "df"].includes(direction)) moveFail(`Bad EWGF direction: ${direction}`);
+    }
+
+    function checkPerfectEWGF(direction, newlyPressedButtons, directionChanged) {
+      if (moveState.step === 0 && direction === "f") {
+        moveState.fFrame = frameCounter;
+        return setMoveStep(1, "f detected");
+      }
+
+      if (moveState.step === 1 && (direction === "n" || direction === "d")) {
+        const fHeldFrames = frameCounter - moveState.fFrame;
+        if (fHeldFrames > 2) return moveFail(`f was held ${fHeldFrames} frames. Perfect EWGF wants it tighter.`);
+        moveState.middleFrame = frameCounter;
+        return setMoveStep(2, `${direction} detected`);
+      }
+
+      if (moveState.step === 2 && direction === "df") {
+        const middleFrames = frameCounter - moveState.middleFrame;
+        if (middleFrames > 2) return moveFail(`Middle input lasted ${middleFrames} frames. Too slow for Perfect EWGF.`);
+        if (hasNew(newlyPressedButtons, "b2")) return moveSuccess("Perfect EWGF! Tight motion and df+2 same-frame.");
+        return moveFail("df reached, but 2 was not pressed on the exact same frame.");
+      }
+
+      if (hasNew(newlyPressedButtons, "b2") && direction !== "df") return moveFail("2 came before df. Perfect EWGF needs df+2 same-frame.");
+      if (moveState.step > 0 && directionChanged && !["f", "n", "d", "df"].includes(direction)) moveFail(`Bad Perfect EWGF direction: ${direction}`);
+    }
+
+    function checkJFSR(direction, newlyPressedButtons) {
+      if (moveState.step === 0 && direction === "f") return setMoveStep(1, "f detected");
+      if (moveState.step === 1 && direction === "n") return setMoveStep(2, "neutral detected");
+      if (moveState.step === 1 && direction === "d") return moveFail("JFSR got a full down input. Use f → n → df+4, not f → d → df+4.");
+      if (moveState.step === 2 && direction === "df") {
+        if (hasNew(newlyPressedButtons, "b4")) return moveSuccess("JFSR! df+4 same-frame.");
+        return moveFail("df reached, but 4 was not pressed on that exact frame.");
+      }
+      if (hasNew(newlyPressedButtons, "b4") && direction !== "df") return moveFail("4 was pressed before df. Need df+4 on the same frame.");
+      if (moveState.step > 0 && !["f", "n", "df"].includes(direction)) moveFail(`Bad JFSR direction: ${direction}`);
+    }
+
+    function checkAcidRain(direction, newlyPressedButtons) {
+      if (hasNew(newlyPressedButtons, "b1")) {
+        moveState.startFrame = frameCounter;
+        moveState.step = 1;
+        moveState.acidHits = [];
+        feedback(`Acid Rain started: 1 at frame 0.`, "warn");
+        return;
+      }
+
+      if (moveState.step === 0) return;
+
+      const elapsed = frameCounter - moveState.startFrame;
+
+      if (hasNew(newlyPressedButtons, "b3")) {
+        const hitIndex = moveState.acidHits.length;
+        const windows = [
+          { min: 1, max: 14, label: "first 3" },
+          { min: 24, max: 26, label: "second 3" },
+          { min: 34, max: 35, label: "third 3" }
+        ];
+
+        if (hitIndex >= windows.length) return moveFail("Extra 3 after Acid Rain sequence.");
+
+        const win = windows[hitIndex];
+        moveState.acidHits.push(elapsed);
+
+        if (elapsed < win.min) {
+          return moveFail(`${win.label} too early at +${elapsed}. Needed +${win.min} to +${win.max}.`);
+        }
+        if (elapsed > win.max) {
+          return moveFail(`${win.label} too late at +${elapsed}. Needed +${win.min} to +${win.max}.`);
+        }
+
+        feedback(`${win.label} good at +${elapsed}. Window: +${win.min}–${win.max}.`, "good");
+
+        if (hitIndex === 2) return moveSuccess(`Acid Rain! Hits at +${moveState.acidHits.join(", +")}.`);
+      }
+
+      if (elapsed > 45) moveFail("Acid Rain timed out. Restart with 1.");
+    }
+
+    function checkTJU(direction, newlyPressedButtons, heldButtons) {
+      const tauntPressed = hasNew(newlyPressedButtons, "b1") && hasHeld(heldButtons, "b3") && hasHeld(heldButtons, "b4") ||
+                           hasNew(newlyPressedButtons, "b3") && hasHeld(heldButtons, "b1") && hasHeld(heldButtons, "b4") ||
+                           hasNew(newlyPressedButtons, "b4") && hasHeld(heldButtons, "b1") && hasHeld(heldButtons, "b3");
+
+      if (moveState.step === 0 && tauntPressed) {
+        moveState.tauntStartFrame = frameCounter;
+        return setMoveStep(1, "taunt started: count frame 0");
+      }
+
+      if (moveState.step === 0) return;
+      const elapsed = frameCounter - moveState.tauntStartFrame;
+
+      if (moveState.step === 1) {
+        if (elapsed > 31 && direction !== "f") return moveFail(`Missed taunt cancel. Forward must be at +28–31, now +${elapsed}.`);
+        if (direction === "f") {
+          if (elapsed < 28) return moveFail(`Forward too early at +${elapsed}. Need +28–31.`);
+          if (elapsed > 31) return moveFail(`Forward too late at +${elapsed}. Need +28–31.`);
+          moveState.tjuForwardFrame = frameCounter;
+          return setMoveStep(2, `single-frame f at +${elapsed}`);
+        }
+      }
+
+      if (moveState.step === 2) {
+        const heldForwardFrames = frameCounter - moveState.tjuForwardFrame;
+        if (heldForwardFrames > 1 && direction === "f") return moveFail(`Forward held for ${heldForwardFrames} frames. TJU wants single-frame f.`);
+        if (direction === "n") {
+          moveState.tjuNeutralFrame = frameCounter;
+          return setMoveStep(3, "single neutral frame detected");
+        }
+      }
+
+      if (moveState.step === 3) {
+        const neutralFrames = frameCounter - moveState.tjuNeutralFrame;
+        if (neutralFrames > 1 && direction === "n") return moveFail(`Neutral held for ${neutralFrames} frames. Need b+2 immediately after one neutral frame.`);
+        if (direction === "b") {
+          if (hasNew(newlyPressedButtons, "b2")) return moveSuccess("TJU! Taunt → 1f f → 1f n → b+2.");
+          return moveFail("Back detected, but 2 was not pressed on the same frame.");
+        }
+        if (hasNew(newlyPressedButtons, "b2") && direction !== "b") return moveFail("2 came before b. Need b+2.");
+      }
+    }
+
+    function checkTauntB4(direction, newlyPressedButtons, heldButtons) {
+      const tauntPressed = hasNew(newlyPressedButtons, "b1") && hasHeld(heldButtons, "b3") && hasHeld(heldButtons, "b4") ||
+                           hasNew(newlyPressedButtons, "b3") && hasHeld(heldButtons, "b1") && hasHeld(heldButtons, "b4") ||
+                           hasNew(newlyPressedButtons, "b4") && hasHeld(heldButtons, "b1") && hasHeld(heldButtons, "b3");
+
+      if (moveState.step === 0 && tauntPressed) {
+        moveState.tauntStartFrame = frameCounter;
+        return setMoveStep(1, "taunt started: count frame 0");
+      }
+
+      if (moveState.step === 0) return;
+      const elapsed = frameCounter - moveState.tauntStartFrame;
+
+      if (direction === "b" && hasNew(newlyPressedButtons, "b4")) {
+        if (elapsed >= 28 && elapsed <= 35) return moveSuccess(`Taunt b+4! b+4 at +${elapsed}.`);
+        if (elapsed < 28) return moveFail(`b+4 too early at +${elapsed}. Current trainer window is +28–35.`);
+        return moveFail(`b+4 too late at +${elapsed}. Current trainer window is +28–35.`);
+      }
+
+      if (elapsed > 40) moveFail("Taunt b+4 timed out.");
+    }
+
+    function setMoveStep(step, message) {
+      moveState.step = step;
+      moveState.lastStepFrame = frameCounter;
+      feedback(message, "warn");
+    }
+
+    function moveSuccess(message) {
+      addSuccess(message);
+      feedback(message, "good");
+      resetMoveState();
+    }
+
+    function moveFail(message) {
+      addMiss(message);
+      feedback(message, "bad");
+      resetMoveState();
+    }
+
+    function addSuccess(message) {
+      cleanCycles++;
+      targetIndex = 0;
+      flashElement(cyclesEl);
+      if (message) feedback(message, "good");
+    }
+
+    function addMiss(message) {
+      misses++;
+      totalAttempts++;
+      flashElement(missesEl);
+      if (message) feedback(message, "bad");
+    }
+
+    function feedback(message, type = "warn") {
+      const label = type === "good" ? "good-pill" : type === "bad" ? "bad-pill" : "warn-pill";
+      moveFeedbackLines.push(`<span class="pill ${label}">F${frameCounter}</span> ${message}`);
+      if (moveFeedbackLines.length > 8) moveFeedbackLines.shift();
+    }
+
+    // ==========================
+    // KEYBOARD EVENTS
+    // ==========================
+    window.addEventListener("keydown", event => {
+      if (keyboardRebindAction) {
+        event.preventDefault();
+        setKeyboardBind(keyboardRebindAction, event.code);
+        return;
+      }
+      const action = getKeyboardActionFromCode(event.code);
+      if (!action) return;
+      event.preventDefault();
+      if (keyboardPressed[action]) return;
+      keyboardPressed[action] = true;
+    });
+
+    window.addEventListener("keyup", event => {
+      const action = getKeyboardActionFromCode(event.code);
+      if (!action) return;
+      event.preventDefault();
+      keyboardPressed[action] = false;
+    });
+
+    window.addEventListener("blur", () => {
+      for (const key in keyboardPressed) keyboardPressed[key] = false;
+      for (const key in gamepadPressed) gamepadPressed[key] = false;
+    });
+
+    // ==========================
+    // GAMEPAD SUPPORT
+    // ==========================
+    window.addEventListener("gamepadconnected", event => {
+      selectedGamepadIndex = event.gamepad.index;
+      updateGamepadStatus();
+    });
+
+    window.addEventListener("gamepaddisconnected", event => {
+      if (selectedGamepadIndex === event.gamepad.index) selectedGamepadIndex = null;
+      for (const key in gamepadPressed) gamepadPressed[key] = false;
+      updateGamepadStatus();
+    });
+
+    function refreshGamepads() {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      selectedGamepadIndex = null;
+      for (let i = 0; i < gamepads.length; i++) {
+        if (gamepads[i]) { selectedGamepadIndex = gamepads[i].index; break; }
+      }
+      updateGamepadStatus();
+    }
+
+    function getSelectedGamepad() {
+      if (!navigator.getGamepads) return null;
+      const gamepads = navigator.getGamepads();
+      if (selectedGamepadIndex !== null && gamepads[selectedGamepadIndex]) return gamepads[selectedGamepadIndex];
+      for (let i = 0; i < gamepads.length; i++) {
+        if (gamepads[i]) { selectedGamepadIndex = gamepads[i].index; return gamepads[i]; }
+      }
+      return null;
+    }
+
+    function pollGamepadOnce() {
+      const gp = getSelectedGamepad();
+      if (!gp) return;
+      updateGamepadStatusFromPad(gp);
+      if (gamepadRebindAction) checkGamepadRebind(gp);
+      for (const action of actionNames) gamepadPressed[action] = isGamepadActionPressed(gp, action);
+    }
+
+    function isGamepadActionPressed(gp, action) {
+      const binds = gamepadBinds[action] || [];
+      return binds.some(bind => isGamepadBindActive(gp, bind));
+    }
+
+    function isGamepadBindActive(gp, bind) {
+      if (bind.type === "button") {
+        const button = gp.buttons[bind.index];
+        return Boolean(button && (button.pressed || button.value > buttonThreshold));
+      }
+      if (bind.type === "axis") {
+        const value = gp.axes[bind.index] || 0;
+        return bind.direction < 0 ? value < -axisThreshold : value > axisThreshold;
+      }
+      return false;
+    }
+
+    function updateGamepadStatus() {
+      const gp = getSelectedGamepad();
+      if (!gp) {
+        gamepadStatusEl.textContent = "No gamepad detected";
+        gamepadStatusEl.className = "medium warn";
+        gamepadDetailsEl.textContent = "Press a button on your device after plugging it in.";
+        return;
+      }
+      updateGamepadStatusFromPad(gp);
+    }
+
+    function updateGamepadStatusFromPad(gp) {
+      gamepadStatusEl.textContent = "Gamepad detected";
+      gamepadStatusEl.className = "medium good";
+      gamepadDetailsEl.textContent = `${gp.id} | buttons: ${gp.buttons.length} | axes: ${gp.axes.length}`;
+    }
+
+    // ==========================
+    // GAMEPAD REBINDING
+    // ==========================
+    function beginGamepadRebind(action) {
+      const gp = getSelectedGamepad();
+      if (!gp) {
+        document.getElementById("gamepadRebindStatus").textContent = "No gamepad detected. Plug one in and press a button first.";
+        return;
+      }
+      gamepadRebindAction = action;
+      gamepadRebindStartSnapshot = snapshotGamepad(gp);
+      document.getElementById("gamepadRebindStatus").textContent = `Move/press the controller input for ${displayAction(action)}...`;
+    }
+
+    function snapshotGamepad(gp) {
+      return { buttons: gp.buttons.map(button => button.value), axes: gp.axes.slice() };
+    }
+
+    function checkGamepadRebind(gp) {
+      if (!gamepadRebindAction || !gamepadRebindStartSnapshot) return;
+      for (let i = 0; i < gp.buttons.length; i++) {
+        const oldValue = gamepadRebindStartSnapshot.buttons[i] || 0;
+        const newValue = gp.buttons[i].value;
+        if (newValue > 0.8 && oldValue < 0.3) { setGamepadBind(gamepadRebindAction, [{ type: "button", index: i }]); return; }
+      }
+      for (let i = 0; i < gp.axes.length; i++) {
+        const oldValue = gamepadRebindStartSnapshot.axes[i] || 0;
+        const newValue = gp.axes[i] || 0;
+        if (Math.abs(newValue) > 0.75 && Math.abs(oldValue) < 0.35) {
+          setGamepadBind(gamepadRebindAction, [{ type: "axis", index: i, direction: newValue < 0 ? -1 : 1 }]);
+          return;
+        }
+      }
+    }
+
+    function setGamepadBind(action, binds) {
+      gamepadBinds[action] = binds;
+      saveGamepadBinds();
+      updateGamepadBindDisplay();
+      document.getElementById("gamepadRebindStatus").textContent = `${displayAction(action)} bound to ${formatGamepadBindList(binds)}.`;
+      gamepadRebindAction = null;
+      gamepadRebindStartSnapshot = null;
+    }
+
+    function resetGamepadBinds() {
+      gamepadBinds = JSON.parse(JSON.stringify(defaultGamepadBinds));
+      saveGamepadBinds();
+      updateGamepadBindDisplay();
+      document.getElementById("gamepadRebindStatus").textContent = "Controller binds reset.";
+    }
+
+    function saveGamepadBinds() { localStorage.setItem("tekkenTrainerGamepadBindsV4", JSON.stringify(gamepadBinds)); }
+    function loadGamepadBinds() {
+      const saved = localStorage.getItem("tekkenTrainerGamepadBindsV4");
+      if (!saved) return JSON.parse(JSON.stringify(defaultGamepadBinds));
+      try { return { ...JSON.parse(JSON.stringify(defaultGamepadBinds)), ...JSON.parse(saved) }; }
+      catch { return JSON.parse(JSON.stringify(defaultGamepadBinds)); }
+    }
+
+    function updateGamepadBindDisplay() {
+      document.getElementById("gpLeftBind").textContent = formatGamepadBindList(gamepadBinds.left);
+      document.getElementById("gpDownBind").textContent = formatGamepadBindList(gamepadBinds.down);
+      document.getElementById("gpRightBind").textContent = formatGamepadBindList(gamepadBinds.right);
+      document.getElementById("gpUpBind").textContent = formatGamepadBindList(gamepadBinds.up);
+      document.getElementById("gpB1Bind").textContent = formatGamepadBindList(gamepadBinds.b1);
+      document.getElementById("gpB2Bind").textContent = formatGamepadBindList(gamepadBinds.b2);
+      document.getElementById("gpB3Bind").textContent = formatGamepadBindList(gamepadBinds.b3);
+      document.getElementById("gpB4Bind").textContent = formatGamepadBindList(gamepadBinds.b4);
+    }
+
+    function formatGamepadBindList(binds) {
+      if (!binds || binds.length === 0) return "Unbound";
+      return binds.map(bind => bind.type === "button" ? `Button ${bind.index}` : `Axis ${bind.index}${bind.direction < 0 ? "-" : "+"}`).join(" / ");
+    }
+
+    // ==========================
+    // KEYBOARD REBINDING
+    // ==========================
+    function beginKeyboardRebind(action) {
+      keyboardRebindAction = action;
+      document.getElementById("keyboardRebindStatus").textContent = `Press a key for ${displayAction(action)}...`;
+    }
+
+    function setKeyboardBind(action, code) {
+      keyboardBinds[action] = code;
+      saveKeyboardBinds();
+      updateKeyboardBindDisplay();
+      document.getElementById("keyboardRebindStatus").textContent = `${displayAction(action)} bound to ${code}.`;
+      keyboardRebindAction = null;
+    }
+
+    function updateKeyboardBindDisplay() {
+      document.getElementById("leftBind").textContent = keyboardBinds.left;
+      document.getElementById("downBind").textContent = keyboardBinds.down;
+      document.getElementById("rightBind").textContent = keyboardBinds.right;
+      document.getElementById("upBind").textContent = keyboardBinds.up;
+      document.getElementById("b1Bind").textContent = keyboardBinds.b1;
+      document.getElementById("b2Bind").textContent = keyboardBinds.b2;
+      document.getElementById("b3Bind").textContent = keyboardBinds.b3;
+      document.getElementById("b4Bind").textContent = keyboardBinds.b4;
+    }
+
+    function resetKeyboardBinds() {
+      keyboardBinds = { ...defaultKeyboardBinds };
+      saveKeyboardBinds();
+      updateKeyboardBindDisplay();
+      document.getElementById("keyboardRebindStatus").textContent = "Keyboard binds reset.";
+    }
+
+    function saveKeyboardBinds() { localStorage.setItem("tekkenTrainerKeyboardBindsV4", JSON.stringify(keyboardBinds)); }
+    function loadKeyboardBinds() {
+      const saved = localStorage.getItem("tekkenTrainerKeyboardBindsV4");
+      if (!saved) return { ...defaultKeyboardBinds };
+      try { return { ...defaultKeyboardBinds, ...JSON.parse(saved) }; }
+      catch { return { ...defaultKeyboardBinds }; }
+    }
+
+    function getKeyboardActionFromCode(code) {
+      for (const action in keyboardBinds) if (keyboardBinds[action] === code) return action;
+      return null;
+    }
+
+    function displayAction(action) {
+      const names = { left: "LEFT", down: "DOWN", right: "RIGHT", up: "UP", b1: "1 / LP", b2: "2 / RP", b3: "3 / LK", b4: "4 / RK" };
+      return names[action] || action.toUpperCase();
+    }
+
+    // ==========================
+    // DISPLAY
+    // ==========================
+    function updateDisplay() {
+      currentInputEl.textContent = lastDirection;
+      const heldButtonLabels = buttonActions.filter(action => pressed[action]).map(buttonLabel);
+      currentButtonsEl.textContent = `buttons: ${heldButtonLabels.length ? heldButtonLabels.join("+") : "—"}`;
+
+      const combinedLog = isMoveMode()
+        ? eventHistory.map(item => `<span class="pill">F${item.frame}</span><span class="pill">${item.notation}</span>`).join(" ")
+        : inputHistory.map(item => {
+            const gapText = item.gap > 0 ? `<span class="small">(${Math.round(item.gap)}ms)</span>` : "";
+            return `<span class="pill">${item.direction}</span>${gapText}`;
+          }).join(" ");
+
+      inputLogEl.innerHTML = combinedLog;
+      moveFeedbackEl.innerHTML = moveFeedbackLines.length ? moveFeedbackLines.join("<br>") : "Pick a move mode and start inputting.";
+      cyclesEl.textContent = cleanCycles;
+      missesEl.textContent = misses;
+      slowInputsEl.textContent = slowInputs;
+
+      const elapsedSeconds = Math.max((performance.now() - startTime) / 1000, 0.001);
+      const speed = cleanCycles / elapsedSeconds;
+      speedEl.textContent = `${speed.toFixed(2)} ${isMoveMode() ? "successes/sec" : "cycles/sec"}`;
+      accuracyEl.textContent = `${getAccuracy().toFixed(1)}% accuracy`;
+
+      updateButtonStates();
+      updateTargetDisplay();
+      updateBestScore();
+      if (isTestRunning) updateCurrentRunComparison();
+    }
+
+    function updateTargetDisplay() {
+      const info = modeInfo[mode];
+      modeHelpEl.textContent = info.help;
+      targetNotesEl.textContent = info.notes;
+      frameDisplayEl.textContent = info.frame;
+      const target = getCurrentTarget();
+      targetDisplayEl.innerHTML = target.map((input, index) => {
+        const expectedClass = !isMoveMode() && index === targetIndex ? "expected" : "";
+        return `<span class="pill ${expectedClass}">${input}</span>`;
+      }).join(" → ");
+    }
+
+    function updateButtonStates() {
+      const { backHeld, forwardHeld, downHeld, upHeld } = getPhysicalState();
+      setState("backState", backHeld);
+      setState("downState", downHeld);
+      setState("forwardState", forwardHeld);
+      setState("upState", upHeld);
+      setState("btn1State", pressed.b1);
+      setState("btn2State", pressed.b2);
+      setState("btn3State", pressed.b3);
+      setState("btn4State", pressed.b4);
+      updateVirtualInputDisplay();
+    }
+
+    function updateVirtualInputDisplay() {
+      const directionCells = ["ub", "u", "uf", "b", "n", "f", "db", "d", "df"];
+      for (const dir of directionCells) {
+        const el = document.getElementById(`cell_${dir}`);
+        if (el) el.classList.toggle("active", lastDirection === dir);
+      }
+
+      for (const action of buttonActions) {
+        const el = document.getElementById(`button_${action}`);
+        if (el) el.classList.toggle("active", Boolean(pressed[action]));
+      }
+    }
+
+    function setState(id, on) {
+      const el = document.getElementById(id);
+      el.textContent = on ? "ON" : "OFF";
+      el.className = on ? "good" : "";
+    }
+
+    function flashElement(element) {
+      element.classList.remove("flash");
+      void element.offsetWidth;
+      element.classList.add("flash");
+    }
+
+    function getAccuracy() {
+      const attempts = Math.max(totalAttempts + cleanCycles, 0);
+      if (attempts === 0) return 100;
+      return Math.max(0, (cleanCycles / attempts) * 100);
+    }
+
+    // ==========================
+    // TIMED TEST
+    // ==========================
+    function startTimedTest() {
+      testStartingBest = getSavedBestScore();
+      resetTrainer();
+      isTestRunning = true;
+      testStartTime = performance.now();
+      testStatusEl.textContent = "Test running...";
+      testMeterEl.style.width = "0%";
+      updatePreviousBestForTest();
+      updateCurrentRunComparison();
+      if (testInterval) clearInterval(testInterval);
+      testInterval = setInterval(() => {
+        const elapsed = performance.now() - testStartTime;
+        const progress = Math.min(100, (elapsed / testDurationMs) * 100);
+        testMeterEl.style.width = `${progress}%`;
+        const secondsLeft = Math.max(0, (testDurationMs - elapsed) / 1000);
+        testStatusEl.textContent = `${secondsLeft.toFixed(1)}s left`;
+        updateCurrentRunComparison();
+        if (elapsed >= testDurationMs) endTimedTest();
+      }, 50);
+    }
+
+    function endTimedTest() {
+      isTestRunning = false;
+      if (testInterval) { clearInterval(testInterval); testInterval = null; }
+      testMeterEl.style.width = "100%";
+      const accuracy = getAccuracy();
+      const score = { mode, side, cycles: cleanCycles, misses, slowInputs, accuracy: Number(accuracy.toFixed(1)), date: new Date().toLocaleString() };
+      const previousBest = testStartingBest;
+      const wasNewBest = saveBestScore(score);
+      if (!previousBest) testStatusEl.textContent = `Done. First saved score: ${cleanCycles} successes/cycles, ${misses} misses, ${slowInputs} slow inputs, ${accuracy.toFixed(1)}% accuracy.`;
+      else if (wasNewBest) testStatusEl.textContent = `NEW BEST! ${cleanCycles}, beating your old best of ${previousBest.cycles}. Misses: ${misses}, slow: ${slowInputs}, accuracy: ${accuracy.toFixed(1)}%.`;
+      else {
+        const diff = cleanCycles - previousBest.cycles;
+        testStatusEl.textContent = `Done. ${cleanCycles}. Previous best was ${previousBest.cycles}, so you were ${Math.abs(diff)} ${diff >= 0 ? "ahead/equal" : "behind"}.`;
+      }
+      updateBestScore();
+      updatePreviousBestForTest();
+      updateCurrentRunComparison();
+    }
+
+    function updatePreviousBestForTest() {
+      const best = getSavedBestScore();
+      previousBestForTestEl.textContent = best ? `${best.cycles} | ${best.misses} misses | ${best.slowInputs} slow | ${best.accuracy}%` : "No previous best yet";
+    }
+
+    function updateCurrentRunComparison() {
+      const best = testStartingBest || getSavedBestScore();
+      if (!best) {
+        currentRunComparisonEl.textContent = `${cleanCycles} — set your first score`;
+        currentRunComparisonEl.className = "medium purple";
+        return;
+      }
+      const diff = cleanCycles - best.cycles;
+      if (diff > 0) { currentRunComparisonEl.textContent = `Ahead by ${diff} 🔥`; currentRunComparisonEl.className = "medium good"; }
+      else if (diff === 0) { currentRunComparisonEl.textContent = `Tied with best: ${cleanCycles}/${best.cycles}`; currentRunComparisonEl.className = "medium warn"; }
+      else { currentRunComparisonEl.textContent = `Behind by ${Math.abs(diff)} — ${cleanCycles}/${best.cycles}`; currentRunComparisonEl.className = "medium bad"; }
+    }
+
+    // ==========================
+    // METRONOME
+    // ==========================
+    function setBpm(value) {
+      bpm = Number(value);
+      document.getElementById("bpmValue").textContent = bpm;
+      if (metronomeRunning) { stopMetronome(); startMetronome(); }
+    }
+
+    function toggleMetronome() { metronomeRunning ? stopMetronome() : startMetronome(); }
+
+    function startMetronome() {
+      metronomeRunning = true;
+      metronomeBtn.textContent = "Stop Metronome";
+      metronomeBtn.classList.add("active");
+      metronomeIndex = 0;
+      tickMetronome();
+      metronomeTimer = setInterval(tickMetronome, 60000 / bpm);
+    }
+
+    function stopMetronome() {
+      metronomeRunning = false;
+      metronomeBtn.textContent = "Start Metronome";
+      metronomeBtn.classList.remove("active");
+      metronomeBeatEl.textContent = "—";
+      if (metronomeTimer) { clearInterval(metronomeTimer); metronomeTimer = null; }
+    }
+
+    function tickMetronome() {
+      const target = getCurrentTarget();
+      const beat = target[metronomeIndex];
+      metronomeBeatEl.textContent = beat;
+      flashElement(metronomeBeatEl);
+      metronomeIndex = (metronomeIndex + 1) % target.length;
+    }
+
+    // ==========================
+    // TIMING WINDOW
+    // ==========================
+    function setTimingWindow(value) {
+      timingWindow = Number(value);
+      document.getElementById("timingValue").textContent = timingWindow;
+      localStorage.setItem("tekkenTrainerTimingWindowV4", timingWindow);
+    }
+
+    function loadTimingWindow() {
+      const saved = localStorage.getItem("tekkenTrainerTimingWindowV4");
+      if (saved) {
+        timingWindow = Number(saved);
+        document.getElementById("timingWindow").value = timingWindow;
+        document.getElementById("timingValue").textContent = timingWindow;
+      }
+    }
+
+    function setKbdDbHoldLimit(value) {
+      kbdDbHoldLimitFrames = Number(value);
+      const label = kbdDbHoldLimitFrames === 0 ? "Off" : `${kbdDbHoldLimitFrames} frame${kbdDbHoldLimitFrames === 1 ? "" : "s"}`;
+      document.getElementById("kbdDbHoldValue").textContent = label;
+      localStorage.setItem("tekkenTrainerKbdDbHoldLimitV5", kbdDbHoldLimitFrames);
+    }
+
+    function loadKbdDbHoldLimit() {
+      const saved = localStorage.getItem("tekkenTrainerKbdDbHoldLimitV5");
+      if (saved !== null) kbdDbHoldLimitFrames = Number(saved);
+      document.getElementById("kbdDbHoldLimit").value = kbdDbHoldLimitFrames;
+      document.getElementById("kbdDbHoldValue").textContent = kbdDbHoldLimitFrames === 0 ? "Off" : `${kbdDbHoldLimitFrames} frame${kbdDbHoldLimitFrames === 1 ? "" : "s"}`;
+    }
+
+    // ==========================
+    // BEST SCORE
+    // ==========================
+    function getBestKey() { return `tekkenTrainerBestV4_${mode}_${side}`; }
+    function getSavedBestScore() {
+      const saved = localStorage.getItem(getBestKey());
+      if (!saved) return null;
+      try { return JSON.parse(saved); } catch { return null; }
+    }
+
+    function saveBestScore(score) {
+      const oldScore = getSavedBestScore();
+      if (!oldScore) { localStorage.setItem(getBestKey(), JSON.stringify(score)); return true; }
+      const isBetter = score.cycles > oldScore.cycles ||
+        (score.cycles === oldScore.cycles && score.misses < oldScore.misses) ||
+        (score.cycles === oldScore.cycles && score.misses === oldScore.misses && score.slowInputs < oldScore.slowInputs) ||
+        (score.cycles === oldScore.cycles && score.misses === oldScore.misses && score.slowInputs === oldScore.slowInputs && score.accuracy > oldScore.accuracy);
+      if (isBetter) { localStorage.setItem(getBestKey(), JSON.stringify(score)); return true; }
+      return false;
+    }
+
+    function updateBestScore() {
+      const best = getSavedBestScore();
+      if (!best) { bestScoreEl.textContent = "Best: none yet"; return; }
+      bestScoreEl.textContent = `Best ${modeInfo[mode].title} ${side.toUpperCase()}: ${best.cycles}, ${best.misses} misses, ${best.slowInputs} slow, ${best.accuracy}% on ${best.date}`;
+    }
+
+    function clearBestScore() {
+      localStorage.removeItem(getBestKey());
+      updateBestScore();
+      updatePreviousBestForTest();
+      updateCurrentRunComparison();
+      document.getElementById("keyboardRebindStatus").textContent = `Cleared best score for ${modeInfo[mode].title} ${side.toUpperCase()}.`;
+    }
+
+    // ==========================
+    // RESET
+    // ==========================
+    function resetTrainer() {
+      for (const key of actionNames) {
+        keyboardPressed[key] = false;
+        gamepadPressed[key] = false;
+        pressed[key] = false;
+        prevPressed[key] = false;
+      }
+      lastDirection = "n";
+      previousInputTime = null;
+      inputHistory = [];
+      eventHistory = [];
+      moveFeedbackLines = [];
+      resetMoveState();
+      targetIndex = 0;
+      kbdDbStartFrame = null;
+      kbdDbLimitTripped = false;
+      cleanCycles = 0;
+      misses = 0;
+      slowInputs = 0;
+      totalAttempts = 0;
+      startTime = performance.now();
+      testMeterEl.style.width = "0%";
+      if (!isTestRunning) testStatusEl.textContent = "Not running";
+      updateDisplay();
+      updateCurrentRunComparison();
+    }
+
+    // ==========================
+    // INIT
+    // ==========================
+    loadTimingWindow();
+    loadKbdDbHoldLimit();
+    updateKeyboardBindDisplay();
+    updateGamepadBindDisplay();
+    updateTargetDisplay();
+    updateDisplay();
+    updateBestScore();
+    updatePreviousBestForTest();
+    updateCurrentRunComparison();
+    refreshGamepads();
+    requestAnimationFrame(mainLoop);
+  </script>
+</body>
+</html>
